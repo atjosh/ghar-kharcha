@@ -55,8 +55,6 @@
   .member-stat-val{font-family:'Playfair Display',serif;font-size:16px;color:var(--primary);}
   .no-budget-banner{display:none;margin-top:12px;background:#FEF0ED;border-radius:10px;padding:12px;text-align:center;font-size:13px;color:var(--danger);}
   .set-budget-btn{background:none;border:1.5px solid var(--primary);color:var(--primary);padding:6px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;margin-top:8px;}
-
-  /* SETTINGS */
   #setup{display:none;} #setup.on{display:block;}
   .fg{margin-bottom:14px;}
   label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px;letter-spacing:.5px;}
@@ -67,12 +65,8 @@
   .fcode-val{font-family:'Playfair Display',serif;font-size:22px;color:var(--success);letter-spacing:3px;}
   .fcode-hint{font-size:11px;color:var(--muted);margin-top:4px;}
   .settings-section{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin:16px 0 10px;padding-top:16px;border-top:1px solid var(--border);}
-  .month-budget-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
-  .month-budget-row:last-child{border-bottom:none;}
-
-  /* TABS */
   .tab-bar{display:flex;background:var(--border);border-radius:10px;padding:3px;margin-bottom:16px;}
-  .tab{flex:1;padding:9px;border:none;background:transparent;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s;}
+  .tab{flex:1;padding:9px;border:none;background:transparent;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s;}
   .tab.on{background:#fff;color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.08);}
   .tpane{display:none;} .tpane.on{display:block;}
   .who-row{display:flex;gap:10px;margin-bottom:14px;}
@@ -130,6 +124,13 @@
   .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#1A1410;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;z-index:999;transition:transform .3s;white-space:nowrap;max-width:90vw;text-align:center;}
   .toast.on{transform:translateX(-50%) translateY(0);}
+
+  /* REPORTS */
+  .summary-row{display:flex;justify-content:space-between;font-size:13px;padding:10px 0;border-bottom:1px solid var(--border);}
+  .summary-row:last-child{border-bottom:none;}
+  .summary-label{color:var(--muted);}
+  .dl-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;background:var(--success);color:#fff;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;margin-top:4px;}
+  .dl-btn:hover{opacity:.9;}
 </style>
 </head>
 <body>
@@ -188,30 +189,27 @@
 <!-- SETTINGS -->
 <div class="card" id="setup">
   <p class="stitle">Family Settings</p>
-
   <div class="fcode-box">
     <div class="fcode-val" id="fcode-display">——</div>
     <div class="fcode-hint">📋 Share this code with your spouse to join!</div>
   </div>
-
   <div class="fg"><label>PERSON 1 NAME</label><input type="text" id="n1" placeholder="e.g. AJ"></div>
   <div class="fg"><label>PERSON 2 NAME</label><input type="text" id="n2" placeholder="e.g. MJ"></div>
-
   <div class="settings-section">📅 Budget for <span id="budget-month-label"></span></div>
   <div class="fg">
     <label>MONTHLY BUDGET (₹)</label>
     <input type="number" id="budg" placeholder="e.g. 40000" inputmode="numeric">
   </div>
   <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">💡 Budget is set per month — each month can be different!</div>
-
   <button class="btn btn-p" id="save-set-btn" onclick="saveSettings()">Save Settings</button>
   <button class="btn btn-o" onclick="togSetup()">Close</button>
 </div>
 
 <!-- TABS -->
 <div class="tab-bar">
-  <button class="tab on" onclick="swTab('add')">➕ Add Expense</button>
+  <button class="tab on" onclick="swTab('add')">➕ Add</button>
   <button class="tab" onclick="swTab('hist')">📋 History</button>
+  <button class="tab" onclick="swTab('reports')">📊 Reports</button>
 </div>
 
 <!-- ADD PANE -->
@@ -233,6 +231,24 @@
   <div class="card">
     <p class="stitle">Expense History &nbsp;<span style="font-weight:300;font-size:10px;color:var(--muted)">Tap ⋮ to edit/delete</span></p>
     <div id="elist"><div class="empty"><div class="ic">🧾</div>No expenses yet.<br>Go spend something! 😄</div></div>
+  </div>
+</div>
+
+<!-- REPORTS PANE -->
+<div class="tpane" id="pane-reports">
+  <div class="card">
+    <p class="stitle">📊 Monthly Summary</p>
+    <div id="summary-stats">
+      <div class="empty"><div class="ic">📊</div>Add some expenses first!</div>
+    </div>
+  </div>
+  <div class="card">
+    <p class="stitle">⬇️ Download Data</p>
+    <div style="text-align:center;padding:8px 0 16px;">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:4px;">Download <strong id="dl-month-label">this month's</strong> expenses</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:16px;">Opens in Excel / Google Sheets 📊</div>
+    </div>
+    <button class="dl-btn" onclick="downloadCSV()">⬇️ Download CSV for <span id="dl-month-label2"></span></button>
   </div>
 </div>
 
@@ -361,12 +377,10 @@
     setSyncStatus('ok', 'Connected — ' + familyId);
   });
 
-  // ── LOAD FAMILY SETTINGS (names only) ──
+  // ── LOAD FAMILY SETTINGS ──
   function loadFamilySettings() {
     const s = familyData.settings || {};
-    const n1 = s.name1 || 'AJ';
-    const n2 = s.name2 || 'MJ';
-    updateNames(n1, n2);
+    updateNames(s.name1 || 'AJ', s.name2 || 'MJ');
   }
 
   function updateNames(n1, n2) {
@@ -383,7 +397,10 @@
   // ── LOAD MONTH BUDGET ──
   async function loadMonthBudget() {
     const key = monthKey();
-    document.getElementById('budget-month-label').textContent = MNS[curM] + ' ' + curY;
+    const monthLabel = MNS[curM] + ' ' + curY;
+    document.getElementById('budget-month-label').textContent = monthLabel;
+    document.getElementById('dl-month-label').textContent = monthLabel + "'s";
+    document.getElementById('dl-month-label2').textContent = monthLabel;
 
     try {
       const budgetDoc = await getDoc(doc(db, "families", familyId, "budgets", key));
@@ -394,13 +411,11 @@
         currentMonthBudget = null;
         document.getElementById('budg').value = '';
       }
-    } catch(e) {
-      currentMonthBudget = null;
-    }
+    } catch(e) { currentMonthBudget = null; }
     refreshBudgetUI();
   }
 
-  // ── LOAD EXPENSES (REAL TIME) ──
+  // ── LOAD EXPENSES ──
   function loadExpenses() {
     if (unsubExpenses) unsubExpenses();
     document.getElementById('mon-disp').textContent = MNS[curM] + ' ' + curY;
@@ -418,9 +433,7 @@
       setSyncStatus('ok', 'Synced — ' + familyId);
     }, (err) => {
       setSyncStatus('err', 'Connection error');
-      if (err.code === 'failed-precondition') {
-        console.error('Index needed:', err);
-      }
+      console.error(err);
     });
   }
 
@@ -439,22 +452,15 @@
     if (budget) {
       const rem = budget - spent;
       const pct = Math.min(spent / budget * 100, 100);
-      const isNegative = rem < 0;
-
+      const isNeg = rem < 0;
       document.getElementById('bdg-v').textContent = fmt(budget);
-      document.getElementById('rm-v').textContent = (isNegative ? '-' : '') + '₹' + fmt(rem);
-
-      // Remaining box — green if positive, red if negative!
-      const rmStat = document.getElementById('rm-stat');
-      rmStat.className = 'stat rm' + (isNegative ? ' negative' : '');
-
+      document.getElementById('rm-v').textContent = (isNeg ? '-' : '') + '₹' + fmt(rem);
+      document.getElementById('rm-stat').className = 'stat rm' + (isNeg ? ' negative' : '');
       const bar = document.getElementById('bar');
       bar.style.width = pct + '%';
       bar.className = 'bar-fill' + (pct >= 100 ? ' dng' : pct >= 70 ? ' warn' : '');
-
       document.getElementById('no-budget-banner').style.display = 'none';
     } else {
-      // No budget set
       document.getElementById('bdg-v').textContent = '—';
       document.getElementById('rm-v').textContent = '—';
       document.getElementById('rm-stat').className = 'stat rm';
@@ -464,10 +470,7 @@
     }
   }
 
-  function refreshUI() {
-    refreshBudgetUI();
-    renderExpenses();
-  }
+  function refreshUI() { refreshBudgetUI(); renderExpenses(); }
 
   // ── RENDER EXPENSES ──
   function renderExpenses() {
@@ -475,12 +478,10 @@
     const n1 = s.name1 || 'AJ';
     const n2 = s.name2 || 'MJ';
     const list = document.getElementById('elist');
-
     if (!cachedExpenses.length) {
       list.innerHTML = '<div class="empty"><div class="ic">🧾</div>No expenses yet.<br>Go spend something! 😄</div>';
       return;
     }
-
     list.innerHTML = cachedExpenses.map(e => {
       const nm = e.who === 'p1' ? n1 : n2;
       const em = e.who === 'p1' ? '👨' : '👩';
@@ -496,6 +497,105 @@
         </div>
       </div>`;
     }).join('');
+  }
+
+  // ── REPORTS ──
+  function refreshReports() {
+    const s = familyData?.settings || {};
+    const n1 = s.name1 || 'AJ';
+    const n2 = s.name2 || 'MJ';
+    const budget = currentMonthBudget;
+    const spent = cachedExpenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+    const p1spent = cachedExpenses.filter(e => e.who === 'p1').reduce((sum, e) => sum + parseFloat(e.amount), 0);
+    const p2spent = cachedExpenses.filter(e => e.who === 'p2').reduce((sum, e) => sum + parseFloat(e.amount), 0);
+    const rem = budget ? budget - spent : null;
+    const savings = budget ? budget - spent : null;
+    const savingsPct = budget ? Math.round((savings / budget) * 100) : null;
+
+    const monthLabel = MNS[curM] + ' ' + curY;
+    document.getElementById('dl-month-label').textContent = monthLabel + "'s";
+    document.getElementById('dl-month-label2').textContent = monthLabel;
+
+    if (!cachedExpenses.length) {
+      document.getElementById('summary-stats').innerHTML =
+        '<div class="empty"><div class="ic">📊</div>No expenses yet this month!</div>';
+      return;
+    }
+
+    document.getElementById('summary-stats').innerHTML = `
+      <div class="summary-row">
+        <span class="summary-label">Total Entries</span>
+        <strong>${cachedExpenses.length} expenses</strong>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Total Spent</span>
+        <strong style="color:var(--danger)">₹${fmt(spent)}</strong>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">${n1} Spent</span>
+        <strong>₹${fmt(p1spent)} (${spent > 0 ? Math.round(p1spent/spent*100) : 0}%)</strong>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">${n2} Spent</span>
+        <strong>₹${fmt(p2spent)} (${spent > 0 ? Math.round(p2spent/spent*100) : 0}%)</strong>
+      </div>
+      ${budget ? `
+      <div class="summary-row">
+        <span class="summary-label">Budget</span>
+        <strong>₹${fmt(budget)}</strong>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Remaining</span>
+        <strong style="color:${rem >= 0 ? 'var(--success)' : 'var(--danger)'}">${rem < 0 ? '-' : ''}₹${fmt(rem)}</strong>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Budget Used</span>
+        <strong>${Math.min(Math.round(spent/budget*100), 100)}%</strong>
+      </div>` : `
+      <div class="summary-row">
+        <span class="summary-label">Budget</span>
+        <strong style="color:var(--muted)">Not set for this month</strong>
+      </div>`}
+    `;
+  }
+
+  // ── DOWNLOAD CSV ──
+  window.downloadCSV = function() {
+    if (!cachedExpenses.length) { showToast('No expenses to download!'); return; }
+    const s = familyData?.settings || {};
+    const n1 = s.name1 || 'AJ';
+    const n2 = s.name2 || 'MJ';
+
+    const rows = [['Date', 'Time', 'Who', 'Amount (₹)', 'Description', 'Month', 'Year']];
+    const sorted = [...cachedExpenses].reverse();
+
+    sorted.forEach(e => {
+      const d = new Date(parseInt(e.ts));
+      const date = d.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
+      const time = d.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+      rows.push([date, time, e.who === 'p1' ? n1 : n2, e.amount, e.desc || '', MNS[curM], curY]);
+    });
+
+    const spent = cachedExpenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+    rows.push([]);
+    rows.push(['--- SUMMARY ---', '', '', '', '', '', '']);
+    rows.push(['Total Spent', '', '', spent, '', '', '']);
+    rows.push([n1 + ' Spent', '', '', cachedExpenses.filter(e=>e.who==='p1').reduce((s,e)=>s+parseFloat(e.amount),0), '', '', '']);
+    rows.push([n2 + ' Spent', '', '', cachedExpenses.filter(e=>e.who==='p2').reduce((s,e)=>s+parseFloat(e.amount),0), '', '', '']);
+    if (currentMonthBudget) {
+      rows.push(['Budget', '', '', currentMonthBudget, '', '', '']);
+      rows.push(['Remaining', '', '', currentMonthBudget - spent, '', '', '']);
+    }
+
+    const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'GharKharcha_' + MNS[curM] + '_' + curY + '.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+    showToast('✅ Downloaded ' + MNS[curM] + ' ' + curY + ' data!');
   }
 
   // ── MONTH NAV ──
@@ -525,44 +625,32 @@
     btn.textContent = 'Saving...'; btn.disabled = true;
 
     try {
-      // Save names to family settings
       await updateDoc(doc(db, "families", familyId), {
-        'settings.name1': n1,
-        'settings.name2': n2
+        'settings.name1': n1, 'settings.name2': n2
       });
-
-      // Save budget PER MONTH in its own document!
-      const key = monthKey();
-      await setDoc(doc(db, "families", familyId, "budgets", key), {
-        amount: budget,
-        month: curM,
-        year: curY,
-        setAt: new Date().toISOString()
+      await setDoc(doc(db, "families", familyId, "budgets", monthKey()), {
+        amount: budget, month: curM, year: curY, setAt: new Date().toISOString()
       });
-
       familyData.settings = { ...familyData.settings, name1: n1, name2: n2 };
       currentMonthBudget = budget;
-
       updateNames(n1, n2);
       document.getElementById('setup').classList.remove('on');
       refreshUI();
       showToast('✅ Settings saved for ' + MNS[curM] + '!');
-    } catch (err) {
-      showToast('❌ Error saving: ' + err.message);
-    }
+    } catch (err) { showToast('❌ Error: ' + err.message); }
     btn.textContent = 'Save Settings'; btn.disabled = false;
   }
 
   // ── WHO TOGGLE ──
   window.selWho = function(w) {
     selP = w;
-    document.getElementById('bp1').className = 'who-btn' + (w === 'p1' ? ' a1' : '');
-    document.getElementById('bp2').className = 'who-btn' + (w === 'p2' ? ' a2' : '');
+    document.getElementById('bp1').className = 'who-btn' + (w==='p1'?' a1':'');
+    document.getElementById('bp2').className = 'who-btn' + (w==='p2'?' a2':'');
   }
   window.eSelWho = function(w) {
     eSelP = w;
-    document.getElementById('ebp1').className = 'who-btn' + (w === 'p1' ? ' a1' : '');
-    document.getElementById('ebp2').className = 'who-btn' + (w === 'p2' ? ' a2' : '');
+    document.getElementById('ebp1').className = 'who-btn' + (w==='p1'?' a1':'');
+    document.getElementById('ebp2').className = 'who-btn' + (w==='p2'?' a2':'');
   }
 
   // ── ADD EXPENSE ──
@@ -573,7 +661,7 @@
 
     const btn = document.getElementById('add-btn');
     btn.innerHTML = '<span class="spinner"></span>Saving...'; btn.disabled = true;
-    setSyncStatus('loading', 'Saving expense...');
+    setSyncStatus('loading', 'Saving...');
 
     try {
       await addDoc(collection(db, "families", familyId, "expenses"), {
@@ -585,18 +673,14 @@
       });
       document.getElementById('amt').value = '';
       document.getElementById('dsc').value = '';
-
-      // Show remaining if budget set
       if (currentMonthBudget) {
-        const spent = cachedExpenses.reduce((s, e) => s + parseFloat(e.amount), 0) + amt;
+        const spent = cachedExpenses.reduce((s,e) => s + parseFloat(e.amount), 0) + amt;
         const rem = currentMonthBudget - spent;
-        showToast('✅ ₹' + fmt(amt) + ' saved! ' + (rem < 0 ? '⚠️ Over budget by ₹' + fmt(rem) : 'Remaining: ₹' + fmt(rem)));
+        showToast('✅ ₹' + fmt(amt) + ' saved! ' + (rem < 0 ? '⚠️ Over by ₹' + fmt(rem) : 'Left: ₹' + fmt(rem)));
       } else {
         showToast('✅ ₹' + fmt(amt) + ' saved!');
       }
-    } catch (err) {
-      showToast('❌ Error saving expense');
-    }
+    } catch (err) { showToast('❌ Error saving'); }
     btn.innerHTML = 'Add Expense'; btn.disabled = false;
   }
 
@@ -636,7 +720,7 @@
         who: eSelP, amount: amt, desc: dsc
       });
       actId = null; closeEdit();
-      showToast('✅ Expense updated!');
+      showToast('✅ Updated!');
     } catch (err) { showToast('❌ Error updating'); }
     btn.textContent = 'Save Changes'; btn.disabled = false;
   }
@@ -661,7 +745,7 @@
       await deleteDoc(doc(db, "families", familyId, "expenses", localId));
       actId = null;
       document.getElementById('dmov').classList.remove('on');
-      showToast('🗑️ Expense deleted');
+      showToast('🗑️ Deleted!');
     } catch (err) { showToast('❌ Error deleting'); }
     btn.textContent = 'Yes, Delete'; btn.disabled = false;
   }
@@ -669,10 +753,12 @@
   // ── TABS ──
   window.swTab = function(t) {
     document.querySelectorAll('.tab').forEach((el, i) => {
-      el.classList.toggle('on', (i===0&&t==='add')||(i===1&&t==='hist'));
+      el.classList.toggle('on', (i===0&&t==='add')||(i===1&&t==='hist')||(i===2&&t==='reports'));
     });
-    document.getElementById('pane-add').classList.toggle('on', t === 'add');
-    document.getElementById('pane-hist').classList.toggle('on', t === 'hist');
+    document.getElementById('pane-add').classList.toggle('on', t==='add');
+    document.getElementById('pane-hist').classList.toggle('on', t==='hist');
+    document.getElementById('pane-reports').classList.toggle('on', t==='reports');
+    if (t === 'reports') refreshReports();
   }
 
   // ── SIGN OUT ──
