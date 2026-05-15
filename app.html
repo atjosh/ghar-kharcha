@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ghar Kharcha</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#FDF8F3; --card:#fff; --primary:#C9622F; --primary-light:#F5E6DC;
+    --accent:#2F6E8C; --accent-light:#DFF0F7; --text:#1A1410; --muted:#7A6A5E;
+    --border:#EDE5DC; --success:#2D7D4E; --success-light:#DFF2E9;
+    --danger:#C0392B; --shadow:0 4px 24px rgba(0,0,0,0.08);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:16px;max-width:480px;margin:0 auto;}
+  .navbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding:10px 0;}
+  .navbar-brand{font-family:'Playfair Display',serif;font-size:20px;color:var(--primary);}
+  .navbar-right{display:flex;align-items:center;gap:8px;}
+  .nav-avatar{width:32px;height:32px;border-radius:50%;border:2px solid var(--primary);}
+  .nav-btn{background:none;border:1.5px solid var(--border);padding:6px 12px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--muted);cursor:pointer;}
+  .nav-btn:hover{border-color:var(--primary);color:var(--primary);}
+  .sync-bar{display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;color:var(--muted);margin-bottom:12px;}
+  .sync-dot{width:7px;height:7px;border-radius:50%;background:#ccc;}
+  .sync-dot.ok{background:var(--success);}
+  .sync-dot.err{background:var(--danger);}
+  .sync-dot.loading{background:#F39C12;animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+  .card{background:var(--card);border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow);border:1px solid var(--border);}
+  .stitle{font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+  .mnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .mnav-btn{background:none;border:1.5px solid var(--border);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:16px;color:var(--muted);display:flex;align-items:center;justify-content:center;}
+  .mnav-btn:hover{border-color:var(--primary);color:var(--primary);}
+  .mnav-title{font-family:'Playfair Display',serif;font-size:18px;}
+  .bdg-display{text-align:center;}
+  .bdg-amt{font-family:'Playfair Display',serif;font-size:42px;color:var(--text);line-height:1;}
+  .bdg-lbl{font-size:12px;color:var(--muted);margin-top:4px;}
+  .bar-wrap{background:var(--border);border-radius:999px;height:10px;margin:16px 0 8px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--success),#4CAF50);transition:width .6s;}
+  .bar-fill.warn{background:linear-gradient(90deg,#E67E22,#F39C12);}
+  .bar-fill.dng{background:linear-gradient(90deg,var(--danger),#E74C3C);}
+  .stats{display:flex;gap:16px;margin-top:12px;}
+  .stat{flex:1;text-align:center;padding:10px;border-radius:10px;}
+  .stat.sp{background:#FEF0ED;}
+  .stat.rm{background:var(--success-light);}
+  .stat.rm.negative{background:#FEF0ED;}
+  .stat-val{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;}
+  .stat.sp .stat-val{color:var(--danger);}
+  .stat.rm .stat-val{color:var(--success);}
+  .stat.rm.negative .stat-val{color:var(--danger);}
+  .stat-lbl{font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.5px;}
+  .member-stats{display:flex;gap:10px;margin-top:12px;}
+  .member-stat{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;}
+  .member-stat-name{font-size:11px;color:var(--muted);margin-bottom:4px;}
+  .member-stat-val{font-family:'Playfair Display',serif;font-size:16px;color:var(--primary);}
+  .no-budget-banner{display:none;margin-top:12px;background:#FEF0ED;border-radius:10px;padding:12px;text-align:center;font-size:13px;color:var(--danger);}
+  .set-budget-btn{background:none;border:1.5px solid var(--primary);color:var(--primary);padding:6px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;margin-top:8px;}
+
+  /* SETTINGS */
+  #setup{display:none;} #setup.on{display:block;}
+  .fg{margin-bottom:14px;}
+  label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px;letter-spacing:.5px;}
+  input,textarea{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:15px;background:var(--bg);color:var(--text);outline:none;transition:border-color .2s;-webkit-appearance:none;}
+  input:focus,textarea:focus{border-color:var(--primary);background:#fff;}
+  textarea{resize:none;height:70px;}
+  .fcode-box{background:var(--success-light);border:1.5px solid var(--success);border-radius:10px;padding:12px;text-align:center;margin-bottom:14px;}
+  .fcode-val{font-family:'Playfair Display',serif;font-size:22px;color:var(--success);letter-spacing:3px;}
+  .fcode-hint{font-size:11px;color:var(--muted);margin-top:4px;}
+  .settings-section{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin:16px 0 10px;padding-top:16px;border-top:1px solid var(--border);}
+  .month-budget-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+  .month-budget-row:last-child{border-bottom:none;}
+
+  /* TABS */
+  .tab-bar{display:flex;background:var(--border);border-radius:10px;padding:3px;margin-bottom:16px;}
+  .tab{flex:1;padding:9px;border:none;background:transparent;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s;}
+  .tab.on{background:#fff;color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.08);}
+  .tpane{display:none;} .tpane.on{display:block;}
+  .who-row{display:flex;gap:10px;margin-bottom:14px;}
+  .who-btn{flex:1;padding:12px;border:2px solid var(--border);border-radius:10px;background:var(--bg);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s;text-align:center;}
+  .who-btn.a1{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
+  .who-btn.a2{border-color:var(--primary);background:var(--primary-light);color:var(--primary);}
+  .btn{width:100%;padding:14px;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:all .2s;}
+  .btn-p{background:var(--primary);color:#fff;} .btn-p:hover{opacity:.9;}
+  .btn-p:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-o{background:transparent;border:1.5px solid var(--border);color:var(--muted);font-size:13px;padding:10px;margin-top:8px;}
+  .empty{text-align:center;padding:30px 20px;color:var(--muted);font-size:13px;}
+  .empty .ic{font-size:36px;margin-bottom:10px;}
+  .erow{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border);}
+  .erow:last-child{border-bottom:none;}
+  .ebadge{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+  .ebadge.p1{background:var(--accent-light);} .ebadge.p2{background:var(--primary-light);}
+  .einfo{flex:1;min-width:0;}
+  .edesc{font-size:14px;font-weight:500;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .emeta{font-size:11px;color:var(--muted);}
+  .eright{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+  .eamt{font-family:'Playfair Display',serif;font-size:17px;color:var(--danger);}
+  .menbtn{background:none;border:1px solid var(--border);cursor:pointer;font-size:16px;color:var(--muted);padding:5px 8px;border-radius:8px;line-height:1;font-weight:700;letter-spacing:1px;}
+  .menbtn:hover{background:var(--border);}
+  .sov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;}
+  .sov.on{display:block;}
+  .sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--card);border-radius:20px 20px 0 0;padding:12px 16px 36px;z-index:101;box-shadow:0 -8px 40px rgba(0,0,0,.2);display:none;}
+  .sheet.on{display:block;animation:sup .25s ease;}
+  @keyframes sup{from{transform:translateX(-50%) translateY(100%);}to{transform:translateX(-50%) translateY(0);}}
+  .shandle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;}
+  .shead{font-size:12px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .sitem{display:flex;align-items:center;gap:14px;padding:15px 8px;border-radius:10px;cursor:pointer;font-size:15px;font-weight:500;transition:background .15s;}
+  .sitem:hover{background:var(--bg);}
+  .sitem .ic{font-size:20px;width:28px;text-align:center;}
+  .sitem.ed{color:var(--accent);} .sitem.dl{color:var(--danger);}
+  .sdiv{height:1px;background:var(--border);margin:4px 0;}
+  .scan{display:flex;align-items:center;justify-content:center;padding:15px;border-radius:10px;cursor:pointer;font-size:15px;font-weight:500;color:var(--muted);margin-top:4px;}
+  .scan:hover{background:var(--bg);}
+  .mov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:20px;}
+  .mov.on{display:flex;}
+  .modal{background:var(--card);border-radius:18px;padding:24px;width:100%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:pin .2s ease;}
+  @keyframes pin{from{transform:scale(.9);opacity:0;}to{transform:scale(1);opacity:1;}}
+  .mic{font-size:36px;text-align:center;margin-bottom:12px;}
+  .mtitle{font-family:'Playfair Display',serif;font-size:18px;text-align:center;margin-bottom:8px;}
+  .mdetail{font-size:13px;color:var(--muted);text-align:center;margin-bottom:20px;line-height:1.5;}
+  .mdetail strong{color:var(--text);}
+  .macts{display:flex;gap:10px;}
+  .macts .btn{flex:1;padding:12px;}
+  .btn-d{background:var(--danger);color:#fff;}
+  .btn-c{background:var(--border);color:var(--muted);}
+  .loading-overlay{display:none;position:fixed;inset:0;background:rgba(253,248,243,.85);z-index:500;align-items:center;justify-content:center;flex-direction:column;gap:12px;}
+  .loading-overlay.on{display:flex;}
+  .loading-spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;}
+  .loading-text{font-size:14px;color:var(--muted);}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#1A1410;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;z-index:999;transition:transform .3s;white-space:nowrap;max-width:90vw;text-align:center;}
+  .toast.on{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loader">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loader-text">Loading...</div>
+</div>
+
+<div class="navbar">
+  <div class="navbar-brand">🏠 Ghar Kharcha</div>
+  <div class="navbar-right">
+    <img id="nav-avatar" class="nav-avatar" src="" alt="">
+    <button class="nav-btn" onclick="togSetup()">⚙️</button>
+    <button class="nav-btn" onclick="signOutUser()">Exit</button>
+  </div>
+</div>
+
+<div class="sync-bar">
+  <div class="sync-dot" id="sync-dot"></div>
+  <span id="sync-label">Connecting...</span>
+</div>
+
+<!-- BUDGET CARD -->
+<div class="card">
+  <div class="mnav">
+    <button class="mnav-btn" onclick="chMon(-1)">&#8249;</button>
+    <span class="mnav-title" id="mon-disp">—</span>
+    <button class="mnav-btn" onclick="chMon(1)">&#8250;</button>
+  </div>
+  <div class="bdg-display">
+    <div class="bdg-lbl">Monthly Budget</div>
+    <div class="bdg-amt">₹<span id="bdg-v">—</span></div>
+  </div>
+  <div class="bar-wrap"><div class="bar-fill" id="bar" style="width:0%"></div></div>
+  <div class="stats">
+    <div class="stat sp"><div class="stat-val" id="sp-v">₹0</div><div class="stat-lbl">Spent</div></div>
+    <div class="stat rm" id="rm-stat"><div class="stat-val" id="rm-v">₹—</div><div class="stat-lbl">Remaining</div></div>
+  </div>
+  <div class="member-stats">
+    <div class="member-stat">
+      <div class="member-stat-name" id="m1-name">Person 1</div>
+      <div class="member-stat-val" id="m1-spent">₹0</div>
+    </div>
+    <div class="member-stat">
+      <div class="member-stat-name" id="m2-name">Person 2</div>
+      <div class="member-stat-val" id="m2-spent">₹0</div>
+    </div>
+  </div>
+  <div class="no-budget-banner" id="no-budget-banner">
+    ⚠️ No budget set for this month.
+    <br><button class="set-budget-btn" onclick="togSetup()">Set Budget →</button>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="card" id="setup">
+  <p class="stitle">Family Settings</p>
+
+  <div class="fcode-box">
+    <div class="fcode-val" id="fcode-display">——</div>
+    <div class="fcode-hint">📋 Share this code with your spouse to join!</div>
+  </div>
+
+  <div class="fg"><label>PERSON 1 NAME</label><input type="text" id="n1" placeholder="e.g. AJ"></div>
+  <div class="fg"><label>PERSON 2 NAME</label><input type="text" id="n2" placeholder="e.g. MJ"></div>
+
+  <div class="settings-section">📅 Budget for <span id="budget-month-label"></span></div>
+  <div class="fg">
+    <label>MONTHLY BUDGET (₹)</label>
+    <input type="number" id="budg" placeholder="e.g. 40000" inputmode="numeric">
+  </div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">💡 Budget is set per month — each month can be different!</div>
+
+  <button class="btn btn-p" id="save-set-btn" onclick="saveSettings()">Save Settings</button>
+  <button class="btn btn-o" onclick="togSetup()">Close</button>
+</div>
+
+<!-- TABS -->
+<div class="tab-bar">
+  <button class="tab on" onclick="swTab('add')">➕ Add Expense</button>
+  <button class="tab" onclick="swTab('hist')">📋 History</button>
+</div>
+
+<!-- ADD PANE -->
+<div class="tpane on" id="pane-add">
+  <div class="card">
+    <p class="stitle">Who's spending?</p>
+    <div class="who-row">
+      <button class="who-btn a1" id="bp1" onclick="selWho('p1')">👨 <span id="lp1">AJ</span></button>
+      <button class="who-btn" id="bp2" onclick="selWho('p2')">👩 <span id="lp2">MJ</span></button>
+    </div>
+    <div class="fg"><label>AMOUNT (₹)</label><input type="number" id="amt" placeholder="0" inputmode="decimal"></div>
+    <div class="fg"><label>DESCRIPTION</label><textarea id="dsc" placeholder="groceries, petrol, chai..."></textarea></div>
+    <button class="btn btn-p" id="add-btn" onclick="addExpense()">Add Expense</button>
+  </div>
+</div>
+
+<!-- HISTORY PANE -->
+<div class="tpane" id="pane-hist">
+  <div class="card">
+    <p class="stitle">Expense History &nbsp;<span style="font-weight:300;font-size:10px;color:var(--muted)">Tap ⋮ to edit/delete</span></p>
+    <div id="elist"><div class="empty"><div class="ic">🧾</div>No expenses yet.<br>Go spend something! 😄</div></div>
+  </div>
+</div>
+
+<!-- ACTION SHEET -->
+<div class="sov" id="sov" onclick="cancelSheet()"></div>
+<div class="sheet" id="sheet">
+  <div class="shandle"></div>
+  <div class="shead" id="shead">Options</div>
+  <div class="sitem ed" onclick="openEdit()"><span class="ic">✏️</span> Edit this expense</div>
+  <div class="sdiv"></div>
+  <div class="sitem dl" onclick="openDelConf()"><span class="ic">🗑️</span> Delete this expense</div>
+  <div class="scan" onclick="cancelSheet()">Cancel</div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="mov" id="dmov">
+  <div class="modal">
+    <div class="mic">🗑️</div>
+    <div class="mtitle">Delete this expense?</div>
+    <div class="mdetail" id="ddet"></div>
+    <div class="macts">
+      <button class="btn btn-c" onclick="closeDel()">Cancel</button>
+      <button class="btn btn-d" id="conf-del-btn" onclick="confDel()">Yes, Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="mov" id="emov">
+  <div class="modal">
+    <div class="mic">✏️</div>
+    <div class="mtitle">Edit Expense</div>
+    <div class="fg" style="margin-top:8px"><label>AMOUNT (₹)</label><input type="number" id="eamt" inputmode="decimal"></div>
+    <div class="fg"><label>DESCRIPTION</label><textarea id="edsc" style="height:60px"></textarea></div>
+    <div class="fg">
+      <label>WHO</label>
+      <div class="who-row" style="margin-bottom:0">
+        <button class="who-btn a1" id="ebp1" onclick="eSelWho('p1')">👨 <span id="elp1">AJ</span></button>
+        <button class="who-btn" id="ebp2" onclick="eSelWho('p2')">👩 <span id="elp2">MJ</span></button>
+      </div>
+    </div>
+    <div class="macts">
+      <button class="btn btn-c" onclick="closeEdit()">Cancel</button>
+      <button class="btn btn-p" id="save-edit-btn" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, collection, addDoc, deleteDoc, updateDoc, onSnapshot, query, where, orderBy } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBH1WHV3r-36kpYJlIXHVefI3RFLI5Lges",
+    authDomain: "ghar-kharcha-24293.firebaseapp.com",
+    projectId: "ghar-kharcha-24293",
+    storageBucket: "ghar-kharcha-24293.firebasestorage.app",
+    messagingSenderId: "244083118810",
+    appId: "1:244083118810:web:f5bd801bfcb0e471b1cbe3",
+    measurementId: "G-7FCB4NT8Q8"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const MNS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  let currentUser = null;
+  let familyId = null;
+  let familyData = null;
+  let cachedExpenses = [];
+  let currentMonthBudget = null;
+  let selP = 'p1';
+  let eSelP = 'p1';
+  let actId = null;
+  let curY = new Date().getFullYear();
+  let curM = new Date().getMonth();
+  let unsubExpenses = null;
+
+  // ── HELPERS ──
+  function fmt(n) { return Number(Math.abs(n)).toLocaleString('en-IN'); }
+  function fmtD(ts) {
+    const d = new Date(parseInt(ts));
+    return d.toLocaleDateString('en-IN',{day:'numeric',month:'short'}) + ' ' +
+      d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  }
+  function monthKey() { return curY + '-' + String(curM).padStart(2,'0'); }
+  function showLoader(msg) { document.getElementById('loader-text').textContent = msg||'Loading...'; document.getElementById('loader').classList.add('on'); }
+  function hideLoader() { document.getElementById('loader').classList.remove('on'); }
+  function setSyncStatus(state, msg) {
+    document.getElementById('sync-dot').className = 'sync-dot ' + state;
+    document.getElementById('sync-label').textContent = msg;
+  }
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('on');
+    setTimeout(() => t.classList.remove('on'), 3500);
+  }
+
+  // ── AUTH CHECK ──
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'index.html'; return; }
+    currentUser = user;
+    document.getElementById('nav-avatar').src = user.photoURL || '';
+    showLoader('Loading your family data...');
+
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    if (!userDoc.exists() || !userDoc.data().familyId) {
+      window.location.href = 'index.html'; return;
+    }
+
+    familyId = userDoc.data().familyId;
+    const famDoc = await getDoc(doc(db, "families", familyId));
+    if (!famDoc.exists()) { window.location.href = 'index.html'; return; }
+    familyData = famDoc.data();
+
+    document.getElementById('fcode-display').textContent = familyId;
+    loadFamilySettings();
+    await loadMonthBudget();
+    loadExpenses();
+    hideLoader();
+    setSyncStatus('ok', 'Connected — ' + familyId);
+  });
+
+  // ── LOAD FAMILY SETTINGS (names only) ──
+  function loadFamilySettings() {
+    const s = familyData.settings || {};
+    const n1 = s.name1 || 'AJ';
+    const n2 = s.name2 || 'MJ';
+    updateNames(n1, n2);
+  }
+
+  function updateNames(n1, n2) {
+    document.getElementById('n1').value = n1;
+    document.getElementById('n2').value = n2;
+    document.getElementById('lp1').textContent = n1;
+    document.getElementById('lp2').textContent = n2;
+    document.getElementById('elp1').textContent = n1;
+    document.getElementById('elp2').textContent = n2;
+    document.getElementById('m1-name').textContent = n1;
+    document.getElementById('m2-name').textContent = n2;
+  }
+
+  // ── LOAD MONTH BUDGET ──
+  async function loadMonthBudget() {
+    const key = monthKey();
+    document.getElementById('budget-month-label').textContent = MNS[curM] + ' ' + curY;
+
+    try {
+      const budgetDoc = await getDoc(doc(db, "families", familyId, "budgets", key));
+      if (budgetDoc.exists()) {
+        currentMonthBudget = budgetDoc.data().amount;
+        document.getElementById('budg').value = currentMonthBudget;
+      } else {
+        currentMonthBudget = null;
+        document.getElementById('budg').value = '';
+      }
+    } catch(e) {
+      currentMonthBudget = null;
+    }
+    refreshBudgetUI();
+  }
+
+  // ── LOAD EXPENSES (REAL TIME) ──
+  function loadExpenses() {
+    if (unsubExpenses) unsubExpenses();
+    document.getElementById('mon-disp').textContent = MNS[curM] + ' ' + curY;
+
+    const q = query(
+      collection(db, "families", familyId, "expenses"),
+      where("year", "==", curY),
+      where("month", "==", curM),
+      orderBy("ts", "desc")
+    );
+
+    unsubExpenses = onSnapshot(q, (snapshot) => {
+      cachedExpenses = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      refreshUI();
+      setSyncStatus('ok', 'Synced — ' + familyId);
+    }, (err) => {
+      setSyncStatus('err', 'Connection error');
+      if (err.code === 'failed-precondition') {
+        console.error('Index needed:', err);
+      }
+    });
+  }
+
+  // ── REFRESH BUDGET UI ──
+  function refreshBudgetUI() {
+    const s = familyData?.settings || {};
+    const budget = currentMonthBudget;
+    const spent = cachedExpenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+    const p1spent = cachedExpenses.filter(e => e.who === 'p1').reduce((sum, e) => sum + parseFloat(e.amount), 0);
+    const p2spent = cachedExpenses.filter(e => e.who === 'p2').reduce((sum, e) => sum + parseFloat(e.amount), 0);
+
+    document.getElementById('sp-v').textContent = '₹' + fmt(spent);
+    document.getElementById('m1-spent').textContent = '₹' + fmt(p1spent);
+    document.getElementById('m2-spent').textContent = '₹' + fmt(p2spent);
+
+    if (budget) {
+      const rem = budget - spent;
+      const pct = Math.min(spent / budget * 100, 100);
+      const isNegative = rem < 0;
+
+      document.getElementById('bdg-v').textContent = fmt(budget);
+      document.getElementById('rm-v').textContent = (isNegative ? '-' : '') + '₹' + fmt(rem);
+
+      // Remaining box — green if positive, red if negative!
+      const rmStat = document.getElementById('rm-stat');
+      rmStat.className = 'stat rm' + (isNegative ? ' negative' : '');
+
+      const bar = document.getElementById('bar');
+      bar.style.width = pct + '%';
+      bar.className = 'bar-fill' + (pct >= 100 ? ' dng' : pct >= 70 ? ' warn' : '');
+
+      document.getElementById('no-budget-banner').style.display = 'none';
+    } else {
+      // No budget set
+      document.getElementById('bdg-v').textContent = '—';
+      document.getElementById('rm-v').textContent = '—';
+      document.getElementById('rm-stat').className = 'stat rm';
+      document.getElementById('bar').style.width = '0%';
+      document.getElementById('bar').className = 'bar-fill';
+      document.getElementById('no-budget-banner').style.display = 'block';
+    }
+  }
+
+  function refreshUI() {
+    refreshBudgetUI();
+    renderExpenses();
+  }
+
+  // ── RENDER EXPENSES ──
+  function renderExpenses() {
+    const s = familyData?.settings || {};
+    const n1 = s.name1 || 'AJ';
+    const n2 = s.name2 || 'MJ';
+    const list = document.getElementById('elist');
+
+    if (!cachedExpenses.length) {
+      list.innerHTML = '<div class="empty"><div class="ic">🧾</div>No expenses yet.<br>Go spend something! 😄</div>';
+      return;
+    }
+
+    list.innerHTML = cachedExpenses.map(e => {
+      const nm = e.who === 'p1' ? n1 : n2;
+      const em = e.who === 'p1' ? '👨' : '👩';
+      return `<div class="erow">
+        <div class="ebadge ${e.who}">${em}</div>
+        <div class="einfo">
+          <div class="edesc">${e.desc || '(no description)'}</div>
+          <div class="emeta">${nm} · ${fmtD(e.ts)}</div>
+        </div>
+        <div class="eright">
+          <div class="eamt">₹${fmt(e.amount)}</div>
+          <button class="menbtn" onclick="openSheet('${e.id}')">⋮</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── MONTH NAV ──
+  window.chMon = async function(d) {
+    curM += d;
+    if (curM < 0) { curM = 11; curY--; }
+    if (curM > 11) { curM = 0; curY++; }
+    cachedExpenses = [];
+    refreshUI();
+    await loadMonthBudget();
+    loadExpenses();
+  }
+
+  // ── SETTINGS ──
+  window.togSetup = function() {
+    document.getElementById('budget-month-label').textContent = MNS[curM] + ' ' + curY;
+    document.getElementById('setup').classList.toggle('on');
+  }
+
+  window.saveSettings = async function() {
+    const n1 = document.getElementById('n1').value.trim() || 'AJ';
+    const n2 = document.getElementById('n2').value.trim() || 'MJ';
+    const budget = parseFloat(document.getElementById('budg').value);
+    if (!budget || budget <= 0) { showToast('Enter a valid budget amount'); return; }
+
+    const btn = document.getElementById('save-set-btn');
+    btn.textContent = 'Saving...'; btn.disabled = true;
+
+    try {
+      // Save names to family settings
+      await updateDoc(doc(db, "families", familyId), {
+        'settings.name1': n1,
+        'settings.name2': n2
+      });
+
+      // Save budget PER MONTH in its own document!
+      const key = monthKey();
+      await setDoc(doc(db, "families", familyId, "budgets", key), {
+        amount: budget,
+        month: curM,
+        year: curY,
+        setAt: new Date().toISOString()
+      });
+
+      familyData.settings = { ...familyData.settings, name1: n1, name2: n2 };
+      currentMonthBudget = budget;
+
+      updateNames(n1, n2);
+      document.getElementById('setup').classList.remove('on');
+      refreshUI();
+      showToast('✅ Settings saved for ' + MNS[curM] + '!');
+    } catch (err) {
+      showToast('❌ Error saving: ' + err.message);
+    }
+    btn.textContent = 'Save Settings'; btn.disabled = false;
+  }
+
+  // ── WHO TOGGLE ──
+  window.selWho = function(w) {
+    selP = w;
+    document.getElementById('bp1').className = 'who-btn' + (w === 'p1' ? ' a1' : '');
+    document.getElementById('bp2').className = 'who-btn' + (w === 'p2' ? ' a2' : '');
+  }
+  window.eSelWho = function(w) {
+    eSelP = w;
+    document.getElementById('ebp1').className = 'who-btn' + (w === 'p1' ? ' a1' : '');
+    document.getElementById('ebp2').className = 'who-btn' + (w === 'p2' ? ' a2' : '');
+  }
+
+  // ── ADD EXPENSE ──
+  window.addExpense = async function() {
+    const amt = parseFloat(document.getElementById('amt').value);
+    const dsc = document.getElementById('dsc').value.trim();
+    if (!amt || amt <= 0) { showToast('Enter a valid amount'); return; }
+
+    const btn = document.getElementById('add-btn');
+    btn.innerHTML = '<span class="spinner"></span>Saving...'; btn.disabled = true;
+    setSyncStatus('loading', 'Saving expense...');
+
+    try {
+      await addDoc(collection(db, "families", familyId, "expenses"), {
+        who: selP, amount: amt, desc: dsc,
+        year: curY, month: curM,
+        ts: Date.now().toString(),
+        addedBy: currentUser.uid,
+        addedByEmail: currentUser.email
+      });
+      document.getElementById('amt').value = '';
+      document.getElementById('dsc').value = '';
+
+      // Show remaining if budget set
+      if (currentMonthBudget) {
+        const spent = cachedExpenses.reduce((s, e) => s + parseFloat(e.amount), 0) + amt;
+        const rem = currentMonthBudget - spent;
+        showToast('✅ ₹' + fmt(amt) + ' saved! ' + (rem < 0 ? '⚠️ Over budget by ₹' + fmt(rem) : 'Remaining: ₹' + fmt(rem)));
+      } else {
+        showToast('✅ ₹' + fmt(amt) + ' saved!');
+      }
+    } catch (err) {
+      showToast('❌ Error saving expense');
+    }
+    btn.innerHTML = 'Add Expense'; btn.disabled = false;
+  }
+
+  // ── ACTION SHEET ──
+  window.openSheet = function(id) {
+    actId = id;
+    const e = cachedExpenses.find(x => x.id === id);
+    if (!e) return;
+    const s = familyData?.settings || {};
+    const nm = e.who === 'p1' ? (s.name1||'AJ') : (s.name2||'MJ');
+    document.getElementById('shead').textContent = (e.desc||'No description') + ' • ₹' + fmt(e.amount) + ' • ' + nm;
+    document.getElementById('sov').classList.add('on');
+    document.getElementById('sheet').classList.add('on');
+  }
+  function closeSheet() { document.getElementById('sov').classList.remove('on'); document.getElementById('sheet').classList.remove('on'); }
+  window.cancelSheet = function() { actId = null; closeSheet(); }
+
+  // ── EDIT ──
+  window.openEdit = function() {
+    const e = cachedExpenses.find(x => x.id === actId);
+    if (!e) { cancelSheet(); return; }
+    closeSheet();
+    document.getElementById('eamt').value = e.amount;
+    document.getElementById('edsc').value = e.desc || '';
+    eSelWho(e.who);
+    document.getElementById('emov').classList.add('on');
+  }
+  window.saveEdit = async function() {
+    const amt = parseFloat(document.getElementById('eamt').value);
+    const dsc = document.getElementById('edsc').value.trim();
+    if (!amt || amt <= 0) { showToast('Enter a valid amount'); return; }
+    const localId = actId;
+    const btn = document.getElementById('save-edit-btn');
+    btn.textContent = 'Saving...'; btn.disabled = true;
+    try {
+      await updateDoc(doc(db, "families", familyId, "expenses", localId), {
+        who: eSelP, amount: amt, desc: dsc
+      });
+      actId = null; closeEdit();
+      showToast('✅ Expense updated!');
+    } catch (err) { showToast('❌ Error updating'); }
+    btn.textContent = 'Save Changes'; btn.disabled = false;
+  }
+  window.closeEdit = function() { document.getElementById('emov').classList.remove('on'); }
+
+  // ── DELETE ──
+  window.openDelConf = function() {
+    const e = cachedExpenses.find(x => x.id === actId);
+    if (!e) { cancelSheet(); return; }
+    const s = familyData?.settings || {};
+    const nm = e.who === 'p1' ? (s.name1||'AJ') : (s.name2||'MJ');
+    closeSheet();
+    document.getElementById('ddet').innerHTML = '<strong>' + (e.desc||'No description') + '</strong><br>₹' + fmt(e.amount) + ' · ' + nm;
+    document.getElementById('dmov').classList.add('on');
+  }
+  window.closeDel = function() { actId = null; document.getElementById('dmov').classList.remove('on'); }
+  window.confDel = async function() {
+    const localId = actId;
+    const btn = document.getElementById('conf-del-btn');
+    btn.textContent = 'Deleting...'; btn.disabled = true;
+    try {
+      await deleteDoc(doc(db, "families", familyId, "expenses", localId));
+      actId = null;
+      document.getElementById('dmov').classList.remove('on');
+      showToast('🗑️ Expense deleted');
+    } catch (err) { showToast('❌ Error deleting'); }
+    btn.textContent = 'Yes, Delete'; btn.disabled = false;
+  }
+
+  // ── TABS ──
+  window.swTab = function(t) {
+    document.querySelectorAll('.tab').forEach((el, i) => {
+      el.classList.toggle('on', (i===0&&t==='add')||(i===1&&t==='hist'));
+    });
+    document.getElementById('pane-add').classList.toggle('on', t === 'add');
+    document.getElementById('pane-hist').classList.toggle('on', t === 'hist');
+  }
+
+  // ── SIGN OUT ──
+  window.signOutUser = async function() {
+    if (unsubExpenses) unsubExpenses();
+    await signOut(auth);
+    window.location.href = 'index.html';
+  }
+
+  // ── MODAL OVERLAY CLOSE ──
+  document.getElementById('dmov').addEventListener('click', function(e) { if(e.target===this) closeDel(); });
+  document.getElementById('emov').addEventListener('click', function(e) { if(e.target===this) closeEdit(); });
+
+</script>
+</body>
+</html>
