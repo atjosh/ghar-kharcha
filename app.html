@@ -124,13 +124,22 @@
   .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#1A1410;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;z-index:999;transition:transform .3s;white-space:nowrap;max-width:90vw;text-align:center;}
   .toast.on{transform:translateX(-50%) translateY(0);}
-
-  /* REPORTS */
   .summary-row{display:flex;justify-content:space-between;font-size:13px;padding:10px 0;border-bottom:1px solid var(--border);}
   .summary-row:last-child{border-bottom:none;}
   .summary-label{color:var(--muted);}
   .dl-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;background:var(--success);color:#fff;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;margin-top:4px;}
   .dl-btn:hover{opacity:.9;}
+
+  /* VOICE */
+  .voice-bar{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .voice-btn{width:48px;height:48px;border-radius:50%;border:none;background:var(--accent);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;box-shadow:0 2px 8px rgba(47,110,140,0.3);}
+  .voice-btn.listening{background:var(--danger);animation:voicepulse 1s infinite;}
+  .voice-btn:hover{opacity:.9;}
+  @keyframes voicepulse{0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,0.4);}50%{box-shadow:0 0 0 12px rgba(192,57,43,0);}}
+  .voice-hint{font-size:11px;color:var(--muted);line-height:1.5;}
+  .voice-hint strong{display:block;color:var(--text);font-size:12px;margin-bottom:2px;}
+  .voice-transcript{background:var(--accent-light);border:1.5px solid var(--accent);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--accent);margin-bottom:14px;display:none;min-height:40px;}
+  .voice-transcript.on{display:block;}
 </style>
 </head>
 <body>
@@ -220,6 +229,17 @@
       <button class="who-btn a1" id="bp1" onclick="selWho('p1')">👨 <span id="lp1">AJ</span></button>
       <button class="who-btn" id="bp2" onclick="selWho('p2')">👩 <span id="lp2">MJ</span></button>
     </div>
+
+    <!-- VOICE INPUT -->
+    <div class="voice-bar">
+      <button class="voice-btn" id="voice-btn" onclick="toggleVoice()" title="Speak your expense">🎤</button>
+      <div class="voice-hint">
+        <strong>Speak your expense!</strong>
+        Say: "Five hundred petrol" or "Two thousand groceries"
+      </div>
+    </div>
+    <div class="voice-transcript" id="voice-transcript">🎤 Listening...</div>
+
     <div class="fg"><label>AMOUNT (₹)</label><input type="number" id="amt" placeholder="0" inputmode="decimal"></div>
     <div class="fg"><label>DESCRIPTION</label><textarea id="dsc" placeholder="groceries, petrol, chai..."></textarea></div>
     <button class="btn btn-p" id="add-btn" onclick="addExpense()">Add Expense</button>
@@ -332,6 +352,147 @@
   let curM = new Date().getMonth();
   let unsubExpenses = null;
 
+  // ── VOICE RECOGNITION ──
+  let recognition = null;
+  let isListening = false;
+
+  function initVoice() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      document.getElementById('voice-btn').style.display = 'none';
+      document.querySelector('.voice-hint').textContent = '🎤 Voice not supported on this browser';
+      return;
+    }
+
+    recognition = new SpeechRecognition();
+    recognition.lang = 'en-IN';
+    recognition.continuous = false;
+    recognition.interimResults = true;
+
+    recognition.onstart = () => {
+      isListening = true;
+      document.getElementById('voice-btn').classList.add('listening');
+      document.getElementById('voice-btn').textContent = '⏹️';
+      const t = document.getElementById('voice-transcript');
+      t.classList.add('on');
+      t.textContent = '🎤 Listening... speak now!';
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map(r => r[0].transcript).join('');
+      document.getElementById('voice-transcript').textContent = '🎤 ' + transcript;
+
+      if (event.results[0].isFinal) {
+        parseVoiceInput(transcript);
+      }
+    };
+
+    recognition.onend = () => {
+      isListening = false;
+      document.getElementById('voice-btn').classList.remove('listening');
+      document.getElementById('voice-btn').textContent = '🎤';
+    };
+
+    recognition.onerror = (e) => {
+      isListening = false;
+      document.getElementById('voice-btn').classList.remove('listening');
+      document.getElementById('voice-btn').textContent = '🎤';
+      document.getElementById('voice-transcript').textContent = '❌ Could not hear — try again!';
+      setTimeout(() => {
+        document.getElementById('voice-transcript').classList.remove('on');
+      }, 2000);
+    };
+  }
+
+  window.toggleVoice = function() {
+    if (!recognition) { showToast('🎤 Voice not supported on this browser'); return; }
+    if (isListening) {
+      recognition.stop();
+    } else {
+      recognition.start();
+    }
+  }
+
+  function parseVoiceInput(transcript) {
+    // Extract amount — look for numbers in the transcript
+    const text = transcript.toLowerCase();
+
+    // Number words mapping
+    const numberWords = {
+      'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5,
+      'six':6,'seven':7,'eight':8,'nine':9,'ten':10,
+      'eleven':11,'twelve':12,'thirteen':13,'fourteen':14,'fifteen':15,
+      'sixteen':16,'seventeen':17,'eighteen':18,'nineteen':19,'twenty':20,
+      'thirty':30,'forty':40,'fifty':50,'sixty':60,'seventy':70,
+      'eighty':80,'ninety':90,'hundred':100,'thousand':1000,'lakh':100000
+    };
+
+    // Try to find a number directly first
+    let amount = null;
+    const directNum = text.match(/\d+/);
+    if (directNum) {
+      amount = parseInt(directNum[0]);
+    }
+
+    // If no direct number, try word numbers
+    if (!amount) {
+      let total = 0;
+      let current = 0;
+      const words = text.split(/\s+/);
+      for (const word of words) {
+        const cleanWord = word.replace(/[^a-z]/g, '');
+        if (numberWords[cleanWord] !== undefined) {
+          const val = numberWords[cleanWord];
+          if (val === 100) {
+            current = current === 0 ? 100 : current * 100;
+          } else if (val === 1000) {
+            total += (current === 0 ? 1 : current) * 1000;
+            current = 0;
+          } else if (val === 100000) {
+            total += (current === 0 ? 1 : current) * 100000;
+            current = 0;
+          } else {
+            current += val;
+          }
+        }
+      }
+      total += current;
+      if (total > 0) amount = total;
+    }
+
+    // Extract description — remove number words and common filler words
+    let desc = text
+      .replace(/\d+/g, '')
+      .replace(/\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|lakh|rupees|rupee|rs|spent|spend|added|add|paid|pay|for|on|the|a|an|and)\b/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // Fill the form!
+    if (amount && amount > 0) {
+      document.getElementById('amt').value = amount;
+    }
+    if (desc) {
+      document.getElementById('dsc').value = desc.charAt(0).toUpperCase() + desc.slice(1);
+    }
+
+    // Update transcript display
+    const displayText = (amount ? '₹' + amount : '❓ Amount not found') +
+      (desc ? ' — ' + desc : '');
+    document.getElementById('voice-transcript').textContent = '✅ ' + displayText;
+
+    setTimeout(() => {
+      document.getElementById('voice-transcript').classList.remove('on');
+    }, 3000);
+
+    if (amount) {
+      showToast('✅ Got it! Check amount and description');
+      document.getElementById('amt').focus();
+    } else {
+      showToast('❓ Could not find amount — please type it');
+    }
+  }
+
   // ── HELPERS ──
   function fmt(n) { return Number(Math.abs(n)).toLocaleString('en-IN'); }
   function fmtD(ts) {
@@ -375,9 +536,9 @@
     loadExpenses();
     hideLoader();
     setSyncStatus('ok', 'Connected — ' + familyId);
+    initVoice();
   });
 
-  // ── LOAD FAMILY SETTINGS ──
   function loadFamilySettings() {
     const s = familyData.settings || {};
     updateNames(s.name1 || 'AJ', s.name2 || 'MJ');
@@ -394,7 +555,6 @@
     document.getElementById('m2-name').textContent = n2;
   }
 
-  // ── LOAD MONTH BUDGET ──
   async function loadMonthBudget() {
     const key = monthKey();
     const monthLabel = MNS[curM] + ' ' + curY;
@@ -415,7 +575,6 @@
     refreshBudgetUI();
   }
 
-  // ── LOAD EXPENSES ──
   function loadExpenses() {
     if (unsubExpenses) unsubExpenses();
     document.getElementById('mon-disp').textContent = MNS[curM] + ' ' + curY;
@@ -437,9 +596,7 @@
     });
   }
 
-  // ── REFRESH BUDGET UI ──
   function refreshBudgetUI() {
-    const s = familyData?.settings || {};
     const budget = currentMonthBudget;
     const spent = cachedExpenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
     const p1spent = cachedExpenses.filter(e => e.who === 'p1').reduce((sum, e) => sum + parseFloat(e.amount), 0);
@@ -472,7 +629,6 @@
 
   function refreshUI() { refreshBudgetUI(); renderExpenses(); }
 
-  // ── RENDER EXPENSES ──
   function renderExpenses() {
     const s = familyData?.settings || {};
     const n1 = s.name1 || 'AJ';
@@ -499,7 +655,6 @@
     }).join('');
   }
 
-  // ── REPORTS ──
   function refreshReports() {
     const s = familyData?.settings || {};
     const n1 = s.name1 || 'AJ';
@@ -509,8 +664,6 @@
     const p1spent = cachedExpenses.filter(e => e.who === 'p1').reduce((sum, e) => sum + parseFloat(e.amount), 0);
     const p2spent = cachedExpenses.filter(e => e.who === 'p2').reduce((sum, e) => sum + parseFloat(e.amount), 0);
     const rem = budget ? budget - spent : null;
-    const savings = budget ? budget - spent : null;
-    const savingsPct = budget ? Math.round((savings / budget) * 100) : null;
 
     const monthLabel = MNS[curM] + ' ' + curY;
     document.getElementById('dl-month-label').textContent = monthLabel + "'s";
@@ -523,82 +676,54 @@
     }
 
     document.getElementById('summary-stats').innerHTML = `
-      <div class="summary-row">
-        <span class="summary-label">Total Entries</span>
-        <strong>${cachedExpenses.length} expenses</strong>
-      </div>
-      <div class="summary-row">
-        <span class="summary-label">Total Spent</span>
-        <strong style="color:var(--danger)">₹${fmt(spent)}</strong>
-      </div>
-      <div class="summary-row">
-        <span class="summary-label">${n1} Spent</span>
-        <strong>₹${fmt(p1spent)} (${spent > 0 ? Math.round(p1spent/spent*100) : 0}%)</strong>
-      </div>
-      <div class="summary-row">
-        <span class="summary-label">${n2} Spent</span>
-        <strong>₹${fmt(p2spent)} (${spent > 0 ? Math.round(p2spent/spent*100) : 0}%)</strong>
-      </div>
+      <div class="summary-row"><span class="summary-label">Total Entries</span><strong>${cachedExpenses.length} expenses</strong></div>
+      <div class="summary-row"><span class="summary-label">Total Spent</span><strong style="color:var(--danger)">₹${fmt(spent)}</strong></div>
+      <div class="summary-row"><span class="summary-label">${n1} Spent</span><strong>₹${fmt(p1spent)} (${spent > 0 ? Math.round(p1spent/spent*100) : 0}%)</strong></div>
+      <div class="summary-row"><span class="summary-label">${n2} Spent</span><strong>₹${fmt(p2spent)} (${spent > 0 ? Math.round(p2spent/spent*100) : 0}%)</strong></div>
       ${budget ? `
-      <div class="summary-row">
-        <span class="summary-label">Budget</span>
-        <strong>₹${fmt(budget)}</strong>
-      </div>
-      <div class="summary-row">
-        <span class="summary-label">Remaining</span>
-        <strong style="color:${rem >= 0 ? 'var(--success)' : 'var(--danger)'}">${rem < 0 ? '-' : ''}₹${fmt(rem)}</strong>
-      </div>
-      <div class="summary-row">
-        <span class="summary-label">Budget Used</span>
-        <strong>${Math.min(Math.round(spent/budget*100), 100)}%</strong>
-      </div>` : `
-      <div class="summary-row">
-        <span class="summary-label">Budget</span>
-        <strong style="color:var(--muted)">Not set for this month</strong>
-      </div>`}
+      <div class="summary-row"><span class="summary-label">Budget</span><strong>₹${fmt(budget)}</strong></div>
+      <div class="summary-row"><span class="summary-label">Remaining</span><strong style="color:${rem >= 0 ? 'var(--success)' : 'var(--danger)'}">${rem < 0 ? '-' : ''}₹${fmt(rem)}</strong></div>
+      <div class="summary-row"><span class="summary-label">Budget Used</span><strong>${Math.min(Math.round(spent/budget*100),100)}%</strong></div>
+      ` : `<div class="summary-row"><span class="summary-label">Budget</span><strong style="color:var(--muted)">Not set for this month</strong></div>`}
     `;
   }
 
-  // ── DOWNLOAD CSV ──
   window.downloadCSV = function() {
     if (!cachedExpenses.length) { showToast('No expenses to download!'); return; }
     const s = familyData?.settings || {};
     const n1 = s.name1 || 'AJ';
     const n2 = s.name2 || 'MJ';
-
-    const rows = [['Date', 'Time', 'Who', 'Amount (₹)', 'Description', 'Month', 'Year']];
+    const rows = [['Date','Time','Who','Amount (₹)','Description','Month','Year']];
     const sorted = [...cachedExpenses].reverse();
-
     sorted.forEach(e => {
       const d = new Date(parseInt(e.ts));
-      const date = d.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
-      const time = d.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
-      rows.push([date, time, e.who === 'p1' ? n1 : n2, e.amount, e.desc || '', MNS[curM], curY]);
+      rows.push([
+        d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}),
+        d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),
+        e.who === 'p1' ? n1 : n2, e.amount, e.desc || '', MNS[curM], curY
+      ]);
     });
-
-    const spent = cachedExpenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+    const spent = cachedExpenses.reduce((sum,e) => sum+parseFloat(e.amount),0);
     rows.push([]);
-    rows.push(['--- SUMMARY ---', '', '', '', '', '', '']);
-    rows.push(['Total Spent', '', '', spent, '', '', '']);
-    rows.push([n1 + ' Spent', '', '', cachedExpenses.filter(e=>e.who==='p1').reduce((s,e)=>s+parseFloat(e.amount),0), '', '', '']);
-    rows.push([n2 + ' Spent', '', '', cachedExpenses.filter(e=>e.who==='p2').reduce((s,e)=>s+parseFloat(e.amount),0), '', '', '']);
+    rows.push(['--- SUMMARY ---','','','','','','']);
+    rows.push(['Total Spent','','',spent,'','','']);
+    rows.push([n1+' Spent','','',cachedExpenses.filter(e=>e.who==='p1').reduce((s,e)=>s+parseFloat(e.amount),0),'','','']);
+    rows.push([n2+' Spent','','',cachedExpenses.filter(e=>e.who==='p2').reduce((s,e)=>s+parseFloat(e.amount),0),'','','']);
     if (currentMonthBudget) {
-      rows.push(['Budget', '', '', currentMonthBudget, '', '', '']);
-      rows.push(['Remaining', '', '', currentMonthBudget - spent, '', '', '']);
+      rows.push(['Budget','','',currentMonthBudget,'','','']);
+      rows.push(['Remaining','','',currentMonthBudget-spent,'','','']);
     }
-
-    const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\n');
-    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const csv = rows.map(r => r.map(c => '"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+    const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'GharKharcha_' + MNS[curM] + '_' + curY + '.csv';
+    link.download = 'GharKharcha_'+MNS[curM]+'_'+curY+'.csv';
     link.click();
     URL.revokeObjectURL(url);
-    showToast('✅ Downloaded ' + MNS[curM] + ' ' + curY + ' data!');
+    showToast('✅ Downloaded '+MNS[curM]+' '+curY+' data!');
   }
 
-  // ── MONTH NAV ──
   window.chMon = async function(d) {
     curM += d;
     if (curM < 0) { curM = 11; curY--; }
@@ -609,7 +734,6 @@
     loadExpenses();
   }
 
-  // ── SETTINGS ──
   window.togSetup = function() {
     document.getElementById('budget-month-label').textContent = MNS[curM] + ' ' + curY;
     document.getElementById('setup').classList.toggle('on');
@@ -620,14 +744,10 @@
     const n2 = document.getElementById('n2').value.trim() || 'MJ';
     const budget = parseFloat(document.getElementById('budg').value);
     if (!budget || budget <= 0) { showToast('Enter a valid budget amount'); return; }
-
     const btn = document.getElementById('save-set-btn');
     btn.textContent = 'Saving...'; btn.disabled = true;
-
     try {
-      await updateDoc(doc(db, "families", familyId), {
-        'settings.name1': n1, 'settings.name2': n2
-      });
+      await updateDoc(doc(db, "families", familyId), {'settings.name1': n1, 'settings.name2': n2});
       await setDoc(doc(db, "families", familyId, "budgets", monthKey()), {
         amount: budget, month: curM, year: curY, setAt: new Date().toISOString()
       });
@@ -641,7 +761,6 @@
     btn.textContent = 'Save Settings'; btn.disabled = false;
   }
 
-  // ── WHO TOGGLE ──
   window.selWho = function(w) {
     selP = w;
     document.getElementById('bp1').className = 'who-btn' + (w==='p1'?' a1':'');
@@ -653,16 +772,13 @@
     document.getElementById('ebp2').className = 'who-btn' + (w==='p2'?' a2':'');
   }
 
-  // ── ADD EXPENSE ──
   window.addExpense = async function() {
     const amt = parseFloat(document.getElementById('amt').value);
     const dsc = document.getElementById('dsc').value.trim();
     if (!amt || amt <= 0) { showToast('Enter a valid amount'); return; }
-
     const btn = document.getElementById('add-btn');
     btn.innerHTML = '<span class="spinner"></span>Saving...'; btn.disabled = true;
     setSyncStatus('loading', 'Saving...');
-
     try {
       await addDoc(collection(db, "families", familyId, "expenses"), {
         who: selP, amount: amt, desc: dsc,
@@ -674,17 +790,16 @@
       document.getElementById('amt').value = '';
       document.getElementById('dsc').value = '';
       if (currentMonthBudget) {
-        const spent = cachedExpenses.reduce((s,e) => s + parseFloat(e.amount), 0) + amt;
+        const spent = cachedExpenses.reduce((s,e) => s+parseFloat(e.amount),0) + amt;
         const rem = currentMonthBudget - spent;
-        showToast('✅ ₹' + fmt(amt) + ' saved! ' + (rem < 0 ? '⚠️ Over by ₹' + fmt(rem) : 'Left: ₹' + fmt(rem)));
+        showToast('✅ ₹'+fmt(amt)+' saved! '+(rem<0?'⚠️ Over by ₹'+fmt(rem):'Left: ₹'+fmt(rem)));
       } else {
-        showToast('✅ ₹' + fmt(amt) + ' saved!');
+        showToast('✅ ₹'+fmt(amt)+' saved!');
       }
     } catch (err) { showToast('❌ Error saving'); }
     btn.innerHTML = 'Add Expense'; btn.disabled = false;
   }
 
-  // ── ACTION SHEET ──
   window.openSheet = function(id) {
     actId = id;
     const e = cachedExpenses.find(x => x.id === id);
@@ -698,7 +813,6 @@
   function closeSheet() { document.getElementById('sov').classList.remove('on'); document.getElementById('sheet').classList.remove('on'); }
   window.cancelSheet = function() { actId = null; closeSheet(); }
 
-  // ── EDIT ──
   window.openEdit = function() {
     const e = cachedExpenses.find(x => x.id === actId);
     if (!e) { cancelSheet(); return; }
@@ -716,9 +830,7 @@
     const btn = document.getElementById('save-edit-btn');
     btn.textContent = 'Saving...'; btn.disabled = true;
     try {
-      await updateDoc(doc(db, "families", familyId, "expenses", localId), {
-        who: eSelP, amount: amt, desc: dsc
-      });
+      await updateDoc(doc(db, "families", familyId, "expenses", localId), {who: eSelP, amount: amt, desc: dsc});
       actId = null; closeEdit();
       showToast('✅ Updated!');
     } catch (err) { showToast('❌ Error updating'); }
@@ -726,14 +838,13 @@
   }
   window.closeEdit = function() { document.getElementById('emov').classList.remove('on'); }
 
-  // ── DELETE ──
   window.openDelConf = function() {
     const e = cachedExpenses.find(x => x.id === actId);
     if (!e) { cancelSheet(); return; }
     const s = familyData?.settings || {};
     const nm = e.who === 'p1' ? (s.name1||'AJ') : (s.name2||'MJ');
     closeSheet();
-    document.getElementById('ddet').innerHTML = '<strong>' + (e.desc||'No description') + '</strong><br>₹' + fmt(e.amount) + ' · ' + nm;
+    document.getElementById('ddet').innerHTML = '<strong>'+(e.desc||'No description')+'</strong><br>₹'+fmt(e.amount)+' · '+nm;
     document.getElementById('dmov').classList.add('on');
   }
   window.closeDel = function() { actId = null; document.getElementById('dmov').classList.remove('on'); }
@@ -750,7 +861,6 @@
     btn.textContent = 'Yes, Delete'; btn.disabled = false;
   }
 
-  // ── TABS ──
   window.swTab = function(t) {
     document.querySelectorAll('.tab').forEach((el, i) => {
       el.classList.toggle('on', (i===0&&t==='add')||(i===1&&t==='hist')||(i===2&&t==='reports'));
@@ -761,14 +871,12 @@
     if (t === 'reports') refreshReports();
   }
 
-  // ── SIGN OUT ──
   window.signOutUser = async function() {
     if (unsubExpenses) unsubExpenses();
     await signOut(auth);
     window.location.href = 'index.html';
   }
 
-  // ── MODAL OVERLAY CLOSE ──
   document.getElementById('dmov').addEventListener('click', function(e) { if(e.target===this) closeDel(); });
   document.getElementById('emov').addEventListener('click', function(e) { if(e.target===this) closeEdit(); });
 
