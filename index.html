@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ghar Kharcha</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#C9622F">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="GharKharcha">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -53,9 +60,38 @@
   .family-code-hint{font-size:12px;color:var(--muted);}
   .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
   @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* GROUP PICKER */
+  #picker-screen{display:none;}
+  .group-item{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;margin-bottom:10px;cursor:pointer;transition:all .2s;background:var(--card);}
+  .group-item:hover{border-color:var(--primary);background:var(--primary-light);}
+  .group-item-info{flex:1;}
+  .group-item-name{font-weight:600;font-size:15px;color:var(--text);}
+  .group-item-code{font-size:11px;color:var(--muted);margin-top:2px;letter-spacing:1px;font-family:monospace;}
+  .group-item-arrow{font-size:20px;color:var(--muted);flex-shrink:0;margin-left:8px;}
 </style>
 </head>
 <body>
+
+<!-- PICKER SCREEN -->
+<div id="picker-screen">
+  <div class="card">
+    <div class="logo">👥</div>
+    <div class="user-welcome">
+      <img id="picker-avatar" class="user-avatar" src="" alt="">
+      <div>
+        <div class="user-info-name" id="picker-name"></div>
+        <div class="user-info-email" id="picker-email"></div>
+      </div>
+    </div>
+    <div class="family-title">Your Groups</div>
+    <div class="family-sub">Choose a group to open.</div>
+    <div id="group-list"></div>
+    <div class="divider">or</div>
+    <button class="btn btn-o" onclick="showAddGroup()" style="margin-top:0;">＋ Create or Join Another Group</button>
+    <button class="btn btn-o" onclick="signOutUser()">← Sign out</button>
+  </div>
+</div>
 
 <!-- LOGIN SCREEN -->
 <div id="login-screen">
@@ -137,14 +173,16 @@
 
     <div id="family-status" class="status-msg"></div>
     <div id="family-error" class="error-msg"></div>
-    <button class="btn btn-o" onclick="signOutUser()">← Sign out</button>
+    <!-- Back to picker (shown when adding a group from picker); sign-out (shown on fresh login) -->
+    <button class="btn btn-o" id="back-to-picker-btn" onclick="backToPicker()" style="display:none;">← Back to groups</button>
+    <button class="btn btn-o" id="signout-btn" onclick="signOutUser()">← Sign out</button>
   </div>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBH1WHV3r-36kpYJlIXHVefI3RFLI5Lges",
@@ -161,14 +199,25 @@
   const db = getFirestore(app);
   const provider = new GoogleAuthProvider();
   let currentUser = null;
+  let comingFromPicker = false;
+
+  // ── HELPERS ──
+  function normalizeGroupIds(data) {
+    if (data.groupIds && Array.isArray(data.groupIds)) return data.groupIds;
+    if (data.groupId) return [data.groupId];
+    return [];
+  }
 
   // ── AUTH STATE ──
   onAuthStateChanged(auth, async (user) => {
     if (!user) { showLoginScreen(); return; }
     currentUser = user;
     const userDoc = await getDoc(doc(db, "users", user.uid));
-    if (userDoc.exists() && userDoc.data().groupId) {
-      window.location.href = 'app.html'; return;
+    if (userDoc.exists()) {
+      const groupIds = normalizeGroupIds(userDoc.data());
+      if (groupIds.length > 0) {
+        showPickerScreen(user, groupIds); return;
+      }
     }
     showGroupScreen(user);
   });
@@ -176,16 +225,67 @@
   function showLoginScreen() {
     document.getElementById('login-screen').classList.remove('off');
     document.getElementById('family-screen').classList.remove('on');
+    document.getElementById('picker-screen').style.display = 'none';
+  }
+
+  async function showPickerScreen(user, groupIds) {
+    document.getElementById('login-screen').classList.add('off');
+    document.getElementById('family-screen').classList.remove('on');
+    document.getElementById('picker-screen').style.display = 'block';
+    document.getElementById('picker-avatar').src = user.photoURL || '';
+    document.getElementById('picker-name').textContent = user.displayName;
+    document.getElementById('picker-email').textContent = user.email;
+
+    const list = document.getElementById('group-list');
+    list.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:12px 0;">Loading groups...</div>';
+
+    const groups = await Promise.all(groupIds.map(async (gid) => {
+      try {
+        const gdoc = await getDoc(doc(db, "groups", gid));
+        return { id: gid, name: gdoc.exists() ? (gdoc.data().groupName || gid) : gid };
+      } catch { return { id: gid, name: gid }; }
+    }));
+
+    list.innerHTML = groups.map(g => `
+      <div class="group-item" onclick="openGroup('${g.id}')">
+        <div class="group-item-info">
+          <div class="group-item-name">${g.name}</div>
+          <div class="group-item-code">${g.id}</div>
+        </div>
+        <span class="group-item-arrow">›</span>
+      </div>
+    `).join('');
   }
 
   function showGroupScreen(user) {
     document.getElementById('login-screen').classList.add('off');
+    document.getElementById('picker-screen').style.display = 'none';
     document.getElementById('family-screen').classList.add('on');
     document.getElementById('setup-avatar').src = user.photoURL || '';
     document.getElementById('setup-name').textContent = user.displayName;
     document.getElementById('setup-email').textContent = user.email;
     document.getElementById('creator-name').value = user.displayName.split(' ')[0];
     document.getElementById('joiner-name').value = user.displayName.split(' ')[0];
+    // Show/hide correct back button
+    document.getElementById('back-to-picker-btn').style.display = comingFromPicker ? 'block' : 'none';
+    document.getElementById('signout-btn').style.display = comingFromPicker ? 'none' : 'block';
+  }
+
+  window.showAddGroup = function() {
+    comingFromPicker = true;
+    showGroupScreen(currentUser);
+  }
+
+  window.backToPicker = async function() {
+    comingFromPicker = false;
+    const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+    const groupIds = userDoc.exists() ? normalizeGroupIds(userDoc.data()) : [];
+    showPickerScreen(currentUser, groupIds);
+  }
+
+  window.openGroup = function(groupId) {
+    sessionStorage.setItem('activeGroupId', groupId);
+    window.location.href = 'app.html';
   }
 
   window.signInWithGoogle = async function() {
@@ -247,16 +347,16 @@
             joinedAt: new Date().toISOString()
           }
         },
-        settings: {
-          budget: budget
-        }
+        settings: { budget }
       });
 
+      // Append groupId to user's groupIds array (creates field if missing)
       await setDoc(doc(db, "users", currentUser.uid), {
-        groupId,
         name: creatorName,
-        email: currentUser.email,
-        role: 'admin'
+        email: currentUser.email
+      }, { merge: true });
+      await updateDoc(doc(db, "users", currentUser.uid), {
+        groupIds: arrayUnion(groupId)
       });
 
       btn.innerHTML = 'Create Group 🏠';
@@ -271,7 +371,7 @@
             <div class="family-code">${groupId}</div>
             <div class="family-code-hint">Members enter this code to join your group</div>
           </div>
-          <button class="btn btn-p" onclick="window.location.href='app.html'" style="margin-top:16px;">Go to Ghar Kharcha →</button>
+          <button class="btn btn-p" onclick="openGroup('${groupId}')" style="margin-top:16px;">Go to Ghar Kharcha →</button>
         </div>
       `;
     } catch (error) {
@@ -306,6 +406,16 @@
       }
 
       const groupData = groupDoc.data();
+
+      // Check if already a member
+      if (groupData.members && groupData.members[currentUser.uid]) {
+        btn.innerHTML = 'Join Group 🔗';
+        btn.disabled = false;
+        setStatus('');
+        setError('You are already a member of this group!');
+        return;
+      }
+
       const updatedMembers = {
         ...groupData.members,
         [currentUser.uid]: {
@@ -318,17 +428,20 @@
       };
 
       await setDoc(doc(db, "groups", groupCode), { ...groupData, members: updatedMembers });
+
+      // Append groupCode to user's groupIds array
       await setDoc(doc(db, "users", currentUser.uid), {
-        groupId: groupCode,
         name: joinerName,
-        email: currentUser.email,
-        role: 'member'
+        email: currentUser.email
+      }, { merge: true });
+      await updateDoc(doc(db, "users", currentUser.uid), {
+        groupIds: arrayUnion(groupCode)
       });
 
       btn.innerHTML = 'Join Group 🔗';
       btn.disabled = false;
       setStatus('✅ Joined "' + groupData.groupName + '"! Redirecting...');
-      setTimeout(() => { window.location.href = 'app.html'; }, 1500);
+      setTimeout(() => { openGroup(groupCode); }, 1500);
 
     } catch (error) {
       btn.innerHTML = 'Join Group 🔗';
@@ -341,6 +454,10 @@
 
   function setStatus(msg) { document.getElementById('family-status').textContent = msg; }
   function setError(msg) { document.getElementById('family-error').textContent = msg; }
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js');
+  }
 </script>
 </body>
 </html>

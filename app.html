@@ -181,6 +181,7 @@
   <div class="navbar-right">
     <img id="nav-avatar" class="nav-avatar" src="" alt="">
     <button class="nav-btn" onclick="togSetup()">⚙️</button>
+    <button class="nav-btn" onclick="switchGroup()">⇄</button>
     <button class="nav-btn" onclick="signOutUser()">Exit</button>
   </div>
 </div>
@@ -341,7 +342,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, deleteDoc, onSnapshot, query, where, orderBy } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, arrayRemove, collection, addDoc, deleteDoc, onSnapshot, query, where, orderBy } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBH1WHV3r-36kpYJlIXHVefI3RFLI5Lges",
@@ -399,6 +400,18 @@
     return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
   }
 
+  // ── HELPERS ──
+  function normalizeGroupIds(data) {
+    if (data.groupIds && Array.isArray(data.groupIds)) return data.groupIds;
+    if (data.groupId) return [data.groupId];
+    return [];
+  }
+
+  window.switchGroup = function() {
+    sessionStorage.removeItem('activeGroupId');
+    window.location.href = 'index.html';
+  }
+
   // ── AUTH CHECK ──
   onAuthStateChanged(auth, async (user) => {
     if (!user) { window.location.href = 'index.html'; return; }
@@ -407,17 +420,23 @@
     showLoader('Loading your group data...');
 
     const userDoc = await getDoc(doc(db, "users", user.uid));
-    if (!userDoc.exists() || !userDoc.data().groupId) {
-      window.location.href = 'index.html'; return;
-    }
+    if (!userDoc.exists()) { window.location.href = 'index.html'; return; }
 
-    groupId = userDoc.data().groupId;
-    isAdmin = userDoc.data().role === 'admin';
+    const groupIds = normalizeGroupIds(userDoc.data());
+    if (groupIds.length === 0) { window.location.href = 'index.html'; return; }
+
+    // Resolve active group from session; fall back to first available
+    groupId = sessionStorage.getItem('activeGroupId');
+    if (!groupId || !groupIds.includes(groupId)) {
+      groupId = groupIds[0];
+      sessionStorage.setItem('activeGroupId', groupId);
+    }
 
     const grpDoc = await getDoc(doc(db, "groups", groupId));
     if (!grpDoc.exists()) { window.location.href = 'index.html'; return; }
     groupData = grpDoc.data();
     members = groupData.members || {};
+    isAdmin = members[user.uid]?.role === 'admin';
 
     // Set default selected who = current user
     selectedWho = currentUser.uid;
@@ -515,8 +534,13 @@
         showToast('⚠️ Transfer admin to someone else first!');
         return;
       }
-      await updateDoc(doc(db, "users", currentUser.uid), { groupId: null });
-      await signOut(auth);
+      // Remove self from group members
+      const updatedMembers = { ...members };
+      delete updatedMembers[currentUser.uid];
+      await updateDoc(doc(db, "groups", groupId), { members: updatedMembers });
+      // Remove this group from user's list
+      await updateDoc(doc(db, "users", currentUser.uid), { groupIds: arrayRemove(groupId) });
+      sessionStorage.removeItem('activeGroupId');
       window.location.href = 'index.html';
     } catch (err) {
       showToast('❌ Error leaving group');
