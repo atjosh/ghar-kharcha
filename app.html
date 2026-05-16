@@ -16,12 +16,12 @@
   body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:16px;max-width:480px;margin:0 auto;}
   .navbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;padding:10px 0;}
   .navbar-brand{font-family:'Playfair Display',serif;font-size:18px;color:var(--primary);}
-  .navbar-group{font-size:11px;color:var(--muted);margin-bottom:16px;text-align:center;}
+  .navbar-group{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:10px;}
   .navbar-right{display:flex;align-items:center;gap:8px;}
   .nav-avatar{width:32px;height:32px;border-radius:50%;border:2px solid var(--primary);}
   .nav-btn{background:none;border:1.5px solid var(--border);padding:6px 12px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--muted);cursor:pointer;}
   .nav-btn:hover{border-color:var(--primary);color:var(--primary);}
-  .sync-bar{display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;color:var(--muted);margin-bottom:12px;}
+  .sync-bar{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);}
   .sync-dot{width:7px;height:7px;border-radius:50%;background:#ccc;}
   .sync-dot.ok{background:var(--success);}
   .sync-dot.err{background:var(--danger);}
@@ -29,33 +29,31 @@
   @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
   .card{background:var(--card);border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow);border:1px solid var(--border);}
   .stitle{font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
-  .mnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
-  .mnav-btn{background:none;border:1.5px solid var(--border);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:16px;color:var(--muted);display:flex;align-items:center;justify-content:center;}
+  .mnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .mnav-btn{background:none;border:1.5px solid var(--border);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;color:var(--muted);display:flex;align-items:center;justify-content:center;}
   .mnav-btn:hover{border-color:var(--primary);color:var(--primary);}
-  .mnav-title{font-family:'Playfair Display',serif;font-size:18px;}
-  .bdg-display{text-align:center;}
-  .bdg-amt{font-family:'Playfair Display',serif;font-size:42px;color:var(--text);line-height:1;}
-  .bdg-lbl{font-size:12px;color:var(--muted);margin-top:4px;}
-  .bar-wrap{background:var(--border);border-radius:999px;height:10px;margin:16px 0 8px;overflow:hidden;}
+  .mnav-title{font-family:'Playfair Display',serif;font-size:16px;}
+  .bdg-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+  .bar-wrap{background:var(--border);border-radius:999px;height:7px;margin:10px 0 6px;overflow:hidden;}
   .bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--success),#4CAF50);transition:width .6s;}
   .bar-fill.warn{background:linear-gradient(90deg,#E67E22,#F39C12);}
   .bar-fill.dng{background:linear-gradient(90deg,var(--danger),#E74C3C);}
-  .stats{display:flex;gap:16px;margin-top:12px;}
-  .stat{flex:1;text-align:center;padding:10px;border-radius:10px;}
+  .stats{display:flex;gap:10px;margin-top:8px;}
+  .stat{flex:1;text-align:center;padding:7px 10px;border-radius:10px;}
   .stat.sp{background:#FEF0ED;}
   .stat.rm{background:var(--success-light);}
   .stat.rm.negative{background:#FEF0ED;}
-  .stat-val{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;}
+  .stat-val{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;}
   .stat.sp .stat-val{color:var(--danger);}
   .stat.rm .stat-val{color:var(--success);}
   .stat.rm.negative .stat-val{color:var(--danger);}
   .stat-lbl{font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.5px;}
 
   /* MEMBER STATS - dynamic */
-  .member-stats{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
-  .member-stat{flex:1;min-width:80px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;}
-  .member-stat-name{font-size:11px;color:var(--muted);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .member-stat-val{font-family:'Playfair Display',serif;font-size:15px;color:var(--primary);}
+  .member-stats{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+  .member-stat{flex:1;min-width:70px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 10px;text-align:center;}
+  .member-stat-name{font-size:10px;color:var(--muted);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .member-stat-val{font-family:'Playfair Display',serif;font-size:13px;color:var(--primary);}
 
   .no-budget-banner{display:none;margin-top:12px;background:#FEF0ED;border-radius:10px;padding:12px;text-align:center;font-size:13px;color:var(--danger);}
   .set-budget-btn{background:none;border:1.5px solid var(--primary);color:var(--primary);padding:6px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;margin-top:8px;}
@@ -185,23 +183,23 @@
     <button class="nav-btn" onclick="signOutUser()">Exit</button>
   </div>
 </div>
-<div class="navbar-group" id="group-name-display">—</div>
-
-<div class="sync-bar">
-  <div class="sync-dot" id="sync-dot"></div>
-  <span id="sync-label">Connecting...</span>
+<div class="navbar-group">
+  <span id="group-name-display">—</span>
+  <span class="sync-bar">
+    <div class="sync-dot" id="sync-dot"></div>
+    <span id="sync-label">Connecting...</span>
+  </span>
 </div>
 
 <!-- BUDGET CARD -->
 <div class="card">
   <div class="mnav">
     <button class="mnav-btn" onclick="chMon(-1)">&#8249;</button>
-    <span class="mnav-title" id="mon-disp">—</span>
+    <div style="text-align:center;">
+      <div class="mnav-title" id="mon-disp">—</div>
+      <div class="bdg-sub">Budget: ₹<span id="bdg-v">—</span></div>
+    </div>
     <button class="mnav-btn" onclick="chMon(1)">&#8250;</button>
-  </div>
-  <div class="bdg-display">
-    <div class="bdg-lbl">Monthly Budget</div>
-    <div class="bdg-amt">₹<span id="bdg-v">—</span></div>
   </div>
   <div class="bar-wrap"><div class="bar-fill" id="bar" style="width:0%"></div></div>
   <div class="stats">
@@ -463,7 +461,7 @@
     document.getElementById('who-buttons').innerHTML = memberList.map(([uid, m]) => `
       <button class="who-btn ${uid === selectedWho ? 'active' : ''}"
         onclick="selectWho('${uid}')">
-        ${getMemberInitials(uid)} ${m.name}
+        ${m.name.split(' ')[0]}
       </button>
     `).join('');
 
@@ -471,7 +469,7 @@
     document.getElementById('edit-who-buttons').innerHTML = memberList.map(([uid, m]) => `
       <button class="who-btn ${uid === editWho ? 'active' : ''}"
         onclick="selectEditWho('${uid}')">
-        ${getMemberInitials(uid)} ${m.name}
+        ${m.name.split(' ')[0]}
       </button>
     `).join('');
   }
@@ -829,7 +827,7 @@
     document.getElementById('edit-who-buttons').innerHTML = Object.entries(members).map(([uid, m]) => `
       <button class="who-btn ${uid === editWho ? 'active' : ''}"
         onclick="selectEditWho('${uid}')">
-        ${getMemberInitials(uid)} ${m.name}
+        ${m.name.split(' ')[0]}
       </button>
     `).join('');
     document.getElementById('emov').classList.add('on');
