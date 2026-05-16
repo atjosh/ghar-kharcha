@@ -22,28 +22,21 @@
   .google-btn:hover{border-color:var(--primary);box-shadow:0 4px 12px rgba(201,98,47,0.15);}
   .status-msg{text-align:center;font-size:13px;color:var(--muted);margin-top:12px;min-height:20px;}
   .error-msg{text-align:center;font-size:13px;color:var(--danger);margin-top:8px;}
-
-  /* FAMILY SETUP SCREEN */
   #family-screen{display:none;}
   #family-screen.on{display:block;}
-  #login-screen{display:block;}
   #login-screen.off{display:none;}
-
   .user-welcome{display:flex;align-items:center;gap:12px;background:var(--primary-light);border-radius:12px;padding:14px;margin-bottom:24px;}
   .user-avatar{width:44px;height:44px;border-radius:50%;border:2px solid var(--primary);}
   .user-info-name{font-weight:500;font-size:15px;color:var(--text);}
   .user-info-email{font-size:12px;color:var(--muted);}
-
   .family-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--text);margin-bottom:6px;}
   .family-sub{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.5;}
-
   .option-card{border:2px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px;cursor:pointer;transition:all .2s;}
   .option-card:hover{border-color:var(--primary);background:var(--primary-light);}
   .option-card.selected{border-color:var(--primary);background:var(--primary-light);}
   .option-icon{font-size:28px;margin-bottom:8px;}
   .option-title{font-weight:600;font-size:15px;color:var(--text);margin-bottom:4px;}
   .option-desc{font-size:12px;color:var(--muted);line-height:1.5;}
-
   .fg{margin-bottom:16px;}
   label{display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:6px;letter-spacing:.8px;text-transform:uppercase;}
   input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:15px;background:var(--bg);color:var(--text);outline:none;transition:border-color .2s;}
@@ -55,11 +48,9 @@
   .btn-o{background:transparent;border:1.5px solid var(--border);color:var(--muted);margin-top:10px;}
   .divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--muted);font-size:12px;}
   .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
-
   .family-code-display{background:var(--success-light);border:2px solid var(--success);border-radius:12px;padding:16px;text-align:center;margin:16px 0;}
   .family-code{font-family:'Playfair Display',serif;font-size:28px;color:var(--success);letter-spacing:4px;margin-bottom:4px;}
   .family-code-hint{font-size:12px;color:var(--muted);}
-
   .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
   @keyframes spin{to{transform:rotate(360deg);}}
 </style>
@@ -71,8 +62,7 @@
   <div class="card">
     <div class="logo">🏠</div>
     <h1>Ghar Kharcha</h1>
-    <p class="sub">Family expense tracker — together!</p>
-
+    <p class="sub">Group expense tracker — together!</p>
     <button class="google-btn" onclick="signInWithGoogle()">
       <svg width="20" height="20" viewBox="0 0 24 24">
         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -82,18 +72,15 @@
       </svg>
       Sign in with Google
     </button>
-
     <div id="login-status" class="status-msg"></div>
     <div id="login-error" class="error-msg"></div>
   </div>
 </div>
 
-<!-- FAMILY SETUP SCREEN -->
+<!-- GROUP SETUP SCREEN -->
 <div id="family-screen">
   <div class="card">
-    <div class="logo">👨‍👩‍</div>
-
-    <!-- User welcome -->
+    <div class="logo">👥</div>
     <div class="user-welcome">
       <img id="setup-avatar" class="user-avatar" src="" alt="">
       <div>
@@ -101,58 +88,55 @@
         <div class="user-info-email" id="setup-email"></div>
       </div>
     </div>
+    <div class="family-title">Set up your group!</div>
+    <div class="family-sub">Create a new expense group or join an existing one with a Group Code.</div>
 
-    <div class="family-title">Set up your family!</div>
-    <div class="family-sub">Create a new family account or join your spouse's existing one.</div>
-
-    <!-- Options -->
     <div id="opt-create" class="option-card selected" onclick="selectOption('create')">
       <div class="option-icon">🏠</div>
-      <div class="option-title">Create New Family</div>
-      <div class="option-desc">Start fresh — you'll get a Family Code to share with your spouse</div>
+      <div class="option-title">Create New Group</div>
+      <div class="option-desc">Start fresh — you'll get a Group Code to share with members</div>
     </div>
 
     <div id="opt-join" class="option-card" onclick="selectOption('join')">
       <div class="option-icon">🔗</div>
-      <div class="option-title">Join Existing Family</div>
-      <div class="option-desc">Your spouse already set up — enter their Family Code to join</div>
+      <div class="option-title">Join Existing Group</div>
+      <div class="option-desc">Someone already created a group — enter their Group Code to join</div>
     </div>
 
     <!-- CREATE SECTION -->
     <div id="create-section">
-      <div class="divider">your family details</div>
+      <div class="divider">group details</div>
+      <div class="fg">
+        <label>Group Name</label>
+        <input type="text" id="group-name" placeholder="e.g. Joshi Family ❤️ or Delhi Flat 🏠">
+      </div>
       <div class="fg">
         <label>Your Name</label>
         <input type="text" id="creator-name" placeholder="e.g. AJ">
       </div>
       <div class="fg">
-        <label>Spouse's Name</label>
-        <input type="text" id="spouse-name" placeholder="e.g. MJ">
-      </div>
-      <div class="fg">
-        <label>Monthly Budget (₹)</label>
+        <label>Monthly Budget (₹) — optional</label>
         <input type="number" id="family-budget" placeholder="e.g. 40000" inputmode="numeric">
       </div>
-      <button class="btn btn-p" id="create-btn" onclick="createFamily()">Create Family 🏠</button>
+      <button class="btn btn-p" id="create-btn" onclick="createGroup()">Create Group 🏠</button>
     </div>
 
     <!-- JOIN SECTION -->
     <div id="join-section" style="display:none;">
-      <div class="divider">enter family code</div>
+      <div class="divider">enter group code</div>
       <div class="fg">
         <label>Your Name</label>
         <input type="text" id="joiner-name" placeholder="e.g. MJ">
       </div>
       <div class="fg">
-        <label>Family Code</label>
-        <input type="text" id="family-code-input" placeholder="e.g. JOSHI-4829" style="text-transform:uppercase;letter-spacing:2px;">
+        <label>Group Code</label>
+        <input type="text" id="family-code-input" placeholder="e.g. XKQR-7823" style="text-transform:uppercase;letter-spacing:2px;">
       </div>
-      <button class="btn btn-p" id="join-btn" onclick="joinFamily()">Join Family 🔗</button>
+      <button class="btn btn-p" id="join-btn" onclick="joinGroup()">Join Group 🔗</button>
     </div>
 
     <div id="family-status" class="status-msg"></div>
     <div id="family-error" class="error-msg"></div>
-
     <button class="btn btn-o" onclick="signOutUser()">← Sign out</button>
   </div>
 </div>
@@ -160,7 +144,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBH1WHV3r-36kpYJlIXHVefI3RFLI5Lges",
@@ -176,36 +160,25 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
   const provider = new GoogleAuthProvider();
-
   let currentUser = null;
 
   // ── AUTH STATE ──
   onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      showLoginScreen();
-      return;
-    }
+    if (!user) { showLoginScreen(); return; }
     currentUser = user;
-
-    // Check if user already has a family
     const userDoc = await getDoc(doc(db, "users", user.uid));
-    if (userDoc.exists() && userDoc.data().familyId) {
-      // Already in a family — go to app!
-      window.location.href = 'app.html';
-      return;
+    if (userDoc.exists() && userDoc.data().groupId) {
+      window.location.href = 'app.html'; return;
     }
-
-    // New user — show family setup
-    showFamilyScreen(user);
+    showGroupScreen(user);
   });
 
-  // ── SHOW SCREENS ──
   function showLoginScreen() {
     document.getElementById('login-screen').classList.remove('off');
     document.getElementById('family-screen').classList.remove('on');
   }
 
-  function showFamilyScreen(user) {
+  function showGroupScreen(user) {
     document.getElementById('login-screen').classList.add('off');
     document.getElementById('family-screen').classList.add('on');
     document.getElementById('setup-avatar').src = user.photoURL || '';
@@ -215,7 +188,6 @@
     document.getElementById('joiner-name').value = user.displayName.split(' ')[0];
   }
 
-  // ── GOOGLE SIGN IN ──
   window.signInWithGoogle = async function() {
     document.getElementById('login-status').textContent = '⏳ Signing in...';
     document.getElementById('login-error').textContent = '';
@@ -227,7 +199,6 @@
     }
   }
 
-  // ── OPTION SELECT ──
   window.selectOption = function(opt) {
     document.getElementById('opt-create').classList.toggle('selected', opt === 'create');
     document.getElementById('opt-join').classList.toggle('selected', opt === 'join');
@@ -235,8 +206,7 @@
     document.getElementById('join-section').style.display = opt === 'join' ? 'block' : 'none';
   }
 
-  // ── GENERATE FAMILY CODE ──
-  function generateFamilyCode() {
+  function generateGroupCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let code = '';
     for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
@@ -245,146 +215,132 @@
     return code;
   }
 
-  // ── CREATE FAMILY ──
-  window.createFamily = async function() {
+  // ── CREATE GROUP ──
+  window.createGroup = async function() {
+    const groupName = document.getElementById('group-name').value.trim();
     const creatorName = document.getElementById('creator-name').value.trim();
-    const spouseName = document.getElementById('spouse-name').value.trim();
-    const budget = parseFloat(document.getElementById('family-budget').value);
+    const budget = parseFloat(document.getElementById('family-budget').value) || null;
 
-    if (!creatorName) { setFamilyError('Please enter your name'); return; }
-    if (!spouseName) { setFamilyError('Please enter your spouse\'s name'); return; }
-    if (!budget || budget <= 0) { setFamilyError('Please enter a valid budget'); return; }
+    if (!groupName) { setError('Please enter a group name'); return; }
+    if (!creatorName) { setError('Please enter your name'); return; }
 
     const btn = document.getElementById('create-btn');
     btn.innerHTML = '<span class="spinner"></span>Creating...';
     btn.disabled = true;
-    setFamilyStatus('Creating your family account...');
-    setFamilyError('');
+    setStatus('Creating your group...');
+    setError('');
 
     try {
-      const familyId = generateFamilyCode();
+      const groupId = generateGroupCode();
 
-      // Create family document
-      await setDoc(doc(db, "families", familyId), {
-        familyId,
+      await setDoc(doc(db, "groups", groupId), {
+        groupId,
+        groupName,
         createdBy: currentUser.uid,
         createdAt: new Date().toISOString(),
         members: {
           [currentUser.uid]: {
             name: creatorName,
             email: currentUser.email,
-            role: 'creator'
+            photoURL: currentUser.photoURL || '',
+            role: 'admin',
+            joinedAt: new Date().toISOString()
           }
         },
         settings: {
-          name1: creatorName,
-          name2: spouseName,
           budget: budget
         }
       });
 
-      // Save user → family mapping
       await setDoc(doc(db, "users", currentUser.uid), {
-        familyId,
+        groupId,
         name: creatorName,
         email: currentUser.email,
-        role: 'creator'
+        role: 'admin'
       });
 
-      // Show success + family code
-      btn.innerHTML = 'Create Family 🏠';
+      btn.innerHTML = 'Create Group 🏠';
       btn.disabled = false;
-      setFamilyStatus('');
+      setStatus('');
 
       document.getElementById('create-section').innerHTML = `
         <div style="text-align:center;margin:16px 0;">
-          <div style="font-size:13px;color:var(--success);font-weight:500;margin-bottom:12px;">✅ Family created successfully!</div>
-          <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">Share this code with your spouse:</div>
+          <div style="font-size:13px;color:var(--success);font-weight:500;margin-bottom:8px;">✅ "${groupName}" created!</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">Share this code with your group members:</div>
           <div class="family-code-display">
-            <div class="family-code">${familyId}</div>
-            <div class="family-code-hint">They'll enter this code to join your family</div>
+            <div class="family-code">${groupId}</div>
+            <div class="family-code-hint">Members enter this code to join your group</div>
           </div>
           <button class="btn btn-p" onclick="window.location.href='app.html'" style="margin-top:16px;">Go to Ghar Kharcha →</button>
         </div>
       `;
     } catch (error) {
-      btn.innerHTML = 'Create Family 🏠';
+      btn.innerHTML = 'Create Group 🏠';
       btn.disabled = false;
-      setFamilyError('❌ Error: ' + error.message);
+      setError('❌ Error: ' + error.message);
     }
   }
 
-  // ── JOIN FAMILY ──
-  window.joinFamily = async function() {
+  // ── JOIN GROUP ──
+  window.joinGroup = async function() {
     const joinerName = document.getElementById('joiner-name').value.trim();
-    const familyCode = document.getElementById('family-code-input').value.trim().toUpperCase();
+    const groupCode = document.getElementById('family-code-input').value.trim().toUpperCase();
 
-    if (!joinerName) { setFamilyError('Please enter your name'); return; }
-    if (!familyCode) { setFamilyError('Please enter the Family Code'); return; }
+    if (!joinerName) { setError('Please enter your name'); return; }
+    if (!groupCode) { setError('Please enter the Group Code'); return; }
 
     const btn = document.getElementById('join-btn');
     btn.innerHTML = '<span class="spinner"></span>Joining...';
     btn.disabled = true;
-    setFamilyStatus('Looking up family code...');
-    setFamilyError('');
+    setStatus('Looking up group code...');
+    setError('');
 
     try {
-      // Check if family exists
-      const familyDoc = await getDoc(doc(db, "families", familyCode));
-      if (!familyDoc.exists()) {
-        btn.innerHTML = 'Join Family 🔗';
+      const groupDoc = await getDoc(doc(db, "groups", groupCode));
+      if (!groupDoc.exists()) {
+        btn.innerHTML = 'Join Group 🔗';
         btn.disabled = false;
-        setFamilyStatus('');
-        setFamilyError('❌ Family code not found. Please check and try again!');
+        setStatus('');
+        setError('❌ Group code not found. Please check and try again!');
         return;
       }
 
-      // Add member to family
-      const familyData = familyDoc.data();
+      const groupData = groupDoc.data();
       const updatedMembers = {
-        ...familyData.members,
+        ...groupData.members,
         [currentUser.uid]: {
           name: joinerName,
           email: currentUser.email,
-          role: 'member'
+          photoURL: currentUser.photoURL || '',
+          role: 'member',
+          joinedAt: new Date().toISOString()
         }
       };
 
-      await setDoc(doc(db, "families", familyCode), {
-        ...familyData,
-        members: updatedMembers
-      });
-
-      // Save user → family mapping
+      await setDoc(doc(db, "groups", groupCode), { ...groupData, members: updatedMembers });
       await setDoc(doc(db, "users", currentUser.uid), {
-        familyId: familyCode,
+        groupId: groupCode,
         name: joinerName,
         email: currentUser.email,
         role: 'member'
       });
 
-      btn.innerHTML = 'Join Family 🔗';
+      btn.innerHTML = 'Join Group 🔗';
       btn.disabled = false;
-      setFamilyStatus('✅ Joined successfully! Redirecting...');
-
+      setStatus('✅ Joined "' + groupData.groupName + '"! Redirecting...');
       setTimeout(() => { window.location.href = 'app.html'; }, 1500);
 
     } catch (error) {
-      btn.innerHTML = 'Join Family 🔗';
+      btn.innerHTML = 'Join Group 🔗';
       btn.disabled = false;
-      setFamilyError('❌ Error: ' + error.message);
+      setError('❌ Error: ' + error.message);
     }
   }
 
-  // ── SIGN OUT ──
-  window.signOutUser = async function() {
-    await signOut(auth);
-  }
+  window.signOutUser = async function() { await signOut(auth); }
 
-  // ── HELPERS ──
-  function setFamilyStatus(msg) { document.getElementById('family-status').textContent = msg; }
-  function setFamilyError(msg) { document.getElementById('family-error').textContent = msg; }
-
+  function setStatus(msg) { document.getElementById('family-status').textContent = msg; }
+  function setError(msg) { document.getElementById('family-error').textContent = msg; }
 </script>
 </body>
 </html>
